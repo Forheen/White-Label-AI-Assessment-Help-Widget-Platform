@@ -1,14 +1,15 @@
 (function () {
 const scriptTag = document.currentScript;
 
-const defaultTheme =
-  scriptTag && scriptTag.getAttribute("theme") === "dark"
-    ? "dark"
-    : "light";
+const config = {
+  theme: scriptTag?.getAttribute("theme") || "light",
+  defaultMode: scriptTag?.getAttribute("default-mode") || null
+};
+
   const state = {
     question: null,
     mode: null,
-    theme: defaultTheme
+  theme: config.theme === "dark" ? "dark" : "light"
   };
 
   const container = document.createElement("div");
@@ -246,10 +247,16 @@ const defaultTheme =
   const input = shadow.querySelector("input");
   const sendBtn = shadow.querySelector("button:last-child");
 
-  btn.onclick = () => {
-    panel.classList.add("open");
-    btn.classList.add("hidden");
-  };
+ btn.onclick = () => {
+  panel.classList.add("open");
+  btn.classList.add("hidden");
+
+  // If default mode is defined and question exists
+  if (config.defaultMode && state.question) {
+    state.mode = config.defaultMode;
+    renderResponse();
+  }
+};
 
   closeBtn.onclick = () => {
     panel.classList.remove("open");

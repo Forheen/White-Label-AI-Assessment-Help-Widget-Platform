@@ -1,9 +1,14 @@
 (function () {
+const scriptTag = document.currentScript;
 
+const defaultTheme =
+  scriptTag && scriptTag.getAttribute("theme") === "dark"
+    ? "dark"
+    : "light";
   const state = {
     question: null,
     mode: null,
-    theme: "light"
+    theme: defaultTheme
   };
 
   const container = document.createElement("div");
@@ -210,7 +215,7 @@
 
     <button class="floating-btn">🤖</button>
 
-    <div class="panel light">
+    <div class="panel ${state.theme}">
       <div class="header">
         AI Tutor
         <div class="header-icons">

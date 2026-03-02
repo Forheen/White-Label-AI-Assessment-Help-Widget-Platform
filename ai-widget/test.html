@@ -9,14 +9,15 @@
 If 2x + 5 = 15, what is the value of x?
 </h2>
 
-<script src="./widget.js"></script>
+<script src="./widget.js" theme="dark"></script>
 
 <script>
   const questionText = document.querySelector(".question").innerText;
 
   AIWidget.loadQuestion({
     id: "Q1",
-    text: questionText
+    text: questionText,
+    
   });
 </script>
 

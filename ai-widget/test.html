@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Widget Test</title>
+</head>
+<body>
+
+<h2 class="question">
+If 2x + 5 = 15, what is the value of x?
+</h2>
+
+<script src="./widget.js"></script>
+
+<script>
+  const questionText = document.querySelector(".question").innerText;
+
+  AIWidget.loadQuestion({
+    id: "Q1",
+    text: questionText
+  });
+</script>
+
+</body>
+</html>

@@ -3,9 +3,14 @@ const scriptTag = document.currentScript;
 
 const config = {
   theme: scriptTag?.getAttribute("theme") || "light",
-  defaultMode: scriptTag?.getAttribute("default-mode") || null
-};
+  defaultMode: scriptTag?.getAttribute("default-mode") || null,
+    enableChat: scriptTag?.getAttribute("enable-chat") !== "false"
 
+};
+if (config.defaultMode === "chat" && !config.enableChat) {
+  console.warn("AIWidget: default-mode='chat' ignored because enable-chat='false'");
+  config.defaultMode = null;
+}
   const state = {
     question: null,
     mode: null,
@@ -278,34 +283,30 @@ const config = {
     }
   };
 
- function renderModes() {
+function renderModes() {
   modesEl.innerHTML = `
     <div class="mode-card" data-mode="solution">
-      <div style="font-weight:600; margin-bottom:4px;">
-        📘 View Full Solution
-      </div>
-      <div style="font-size:13px; opacity:0.8;">
-        Get the complete answer instantly with final steps.
+      <strong>📘 View Full Solution</strong>
+      <div style="font-size:13px;opacity:0.8;">
+        Get the complete answer instantly.
       </div>
     </div>
 
     <div class="mode-card" data-mode="breakdown">
-      <div style="font-weight:600; margin-bottom:4px;">
-        🧠 Understand Step-by-Step
-      </div>
-      <div style="font-size:13px; opacity:0.8;">
-        Learn the approach and reasoning behind the solution.
+      <strong>🧠 Understand Step-by-Step</strong>
+      <div style="font-size:13px;opacity:0.8;">
+        Learn the reasoning behind the solution.
       </div>
     </div>
 
-    <div class="mode-card" data-mode="chat">
-      <div style="font-weight:600; margin-bottom:4px;">
-        💬 Guided Tutor Chat
+    ${config.enableChat ? `
+      <div class="mode-card" data-mode="chat">
+        <strong>💬 Guided Tutor Chat</strong>
+        <div style="font-size:13px;opacity:0.8;">
+          Solve interactively with hints.
+        </div>
       </div>
-      <div style="font-size:13px; opacity:0.8;">
-        Solve interactively with hints and guided questions.
-      </div>
-    </div>
+    ` : ""}
   `;
 
   shadow.querySelectorAll(".mode-card").forEach(card => {
@@ -318,7 +319,9 @@ const config = {
   function renderResponse() {
 
     footer.classList.remove("active");
-
+if (state.mode === "chat" && !config.enableChat) {
+  return;
+}
     if (state.mode === "solution") {
       responseEl.innerHTML = `
         <div class="response-box">

@@ -1,15 +1,37 @@
 (function () {
 const scriptTag = document.currentScript;
 
-const config = {
+let config = {
   theme: scriptTag?.getAttribute("theme") || "light",
   defaultMode: scriptTag?.getAttribute("default-mode") || null,
     enableChat: scriptTag?.getAttribute("enable-chat") !== "false"
 
 };
-if (config.defaultMode === "chat" && !config.enableChat) {
-  console.warn("AIWidget: default-mode='chat' ignored because enable-chat='false'");
-  config.defaultMode = null;
+config = validateConfig(config);
+function validateConfig(config) {
+
+  const validThemes = ["light", "dark"];
+  const validModes = ["solution", "breakdown", "chat"];
+
+  // Validate theme
+  if (!validThemes.includes(config.theme)) {
+    console.warn(`AIWidget: Invalid theme "${config.theme}". Falling back to "light".`);
+    config.theme = "light";
+  }
+
+  // Validate default mode
+  if (config.defaultMode && !validModes.includes(config.defaultMode)) {
+    console.warn(`AIWidget: Invalid default-mode "${config.defaultMode}". Ignoring.`);
+    config.defaultMode = null;
+  }
+
+  // Conflict: chat disabled but default-mode is chat
+  if (config.defaultMode === "chat" && config.enableChat === false) {
+    console.warn("AIWidget: default-mode='chat' ignored because enable-chat='false'.");
+    config.defaultMode = null;
+  }
+
+  return config;
 }
   const state = {
     question: null,

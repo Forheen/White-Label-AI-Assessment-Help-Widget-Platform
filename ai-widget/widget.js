@@ -4,7 +4,8 @@ const scriptTag = document.currentScript;
 let config = {
   theme: scriptTag?.getAttribute("theme") || "light",
   defaultMode: scriptTag?.getAttribute("default-mode") || null,
-    enableChat: scriptTag?.getAttribute("enable-chat") !== "false"
+    enableChat: scriptTag?.getAttribute("enable-chat") !== "false",
+      position: scriptTag?.getAttribute("position") || "right"
 
 };
 config = validateConfig(config);
@@ -12,6 +13,8 @@ function validateConfig(config) {
 
   const validThemes = ["light", "dark"];
   const validModes = ["solution", "breakdown", "chat"];
+const validPositions = ["left", "right"];
+
 
   // Validate theme
   if (!validThemes.includes(config.theme)) {
@@ -30,6 +33,12 @@ function validateConfig(config) {
     console.warn("AIWidget: default-mode='chat' ignored because enable-chat='false'.");
     config.defaultMode = null;
   }
+
+  //Validate position
+  if (!validPositions.includes(config.position)) {
+  console.warn(`AIWidget: Invalid position "${config.position}". Falling back to "right".`);
+  config.position = "right";
+}
 
   return config;
 }
@@ -65,20 +74,22 @@ function validateConfig(config) {
       }
 
       .floating-btn {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #4f46e5, #6366f1);
-        border: none;
-        font-size: 26px;
-        cursor: pointer;
-        box-shadow: 0 10px 25px rgba(79,70,229,0.4);
-        transition: all 0.25s ease;
-        z-index: 999999;
-      }
+  position: fixed;
+  bottom: 24px;
+
+  ${config.position === "left" ? "left: 24px;" : "right: 24px;"}
+
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(79,70,229,0.4);
+  transition: all 0.25s ease;
+  z-index: 999999;
+}
 
       .floating-btn.hidden {
         opacity: 0;
@@ -86,21 +97,32 @@ function validateConfig(config) {
         transform: scale(0.8);
       }
 
-      .panel {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 420px;
-        height: 100%;
-        background: var(--bg);
-        color: var(--text);
-        box-shadow: -10px 0 40px rgba(0,0,0,0.2);
-        transform: translateX(100%);
-        transition: transform 0.35s ease;
-        display: flex;
-        flex-direction: column;
-        z-index: 999998;
-      }
+     .panel {
+  position: fixed;
+  top: 0;
+
+  ${config.position === "left" ? "left: 0;" : "right: 0;"}
+
+  width: 420px;
+  max-width: 100%;
+  height: 100vh;
+
+  background: var(--bg);
+  color: var(--text);
+
+  box-shadow: ${config.position === "left"
+    ? "8px 0 30px rgba(0,0,0,0.15)"
+    : "-8px 0 30px rgba(0,0,0,0.15)"};
+
+  transform: translateX(${config.position === "left" ? "-100%" : "100%"});
+  transition: transform 0.35s ease;
+
+  display: flex;
+  flex-direction: column;
+
+  z-index: 999998;
+  overflow: hidden;
+}
 
       .panel.open {
         transform: translateX(0);

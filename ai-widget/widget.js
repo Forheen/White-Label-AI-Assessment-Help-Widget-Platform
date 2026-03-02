@@ -5,7 +5,8 @@ let config = {
   theme: scriptTag?.getAttribute("theme") || "light",
   defaultMode: scriptTag?.getAttribute("default-mode") || null,
     enableChat: scriptTag?.getAttribute("enable-chat") !== "false",
-      position: scriptTag?.getAttribute("position") || "right"
+      position: scriptTag?.getAttribute("position") || "right",
+brandColor: scriptTag?.getAttribute("brand-color") || "#6366f1"
 
 };
 config = validateConfig(config);
@@ -14,6 +15,7 @@ function validateConfig(config) {
   const validThemes = ["light", "dark"];
   const validModes = ["solution", "breakdown", "chat"];
 const validPositions = ["left", "right"];
+const hexRegex = /^#([0-9A-F]{3}){1,2}$/i;
 
 
   // Validate theme
@@ -40,6 +42,31 @@ const validPositions = ["left", "right"];
   config.position = "right";
 }
 
+    // Validate brand color
+
+let colors = config.brandColor.split(",");
+
+if (colors.length === 1) {
+  // Solid mode
+  if (!hexRegex.test(colors[0].trim())) {
+    console.warn(`AIWidget: Invalid brand-color "${config.brandColor}". Falling back to default.`);
+    config.brandColor = "#6366f1";
+  }
+} else if (colors.length === 2) {
+  // Gradient mode
+  const c1 = colors[0].trim();
+  const c2 = colors[1].trim();
+
+  if (!hexRegex.test(c1) || !hexRegex.test(c2)) {
+    console.warn(`AIWidget: Invalid gradient colors "${config.brandColor}". Falling back.`);
+    config.brandColor = "#6366f1";
+  } else {
+    config.brandColor = `${c1},${c2}`;
+  }
+} else {
+  console.warn(`AIWidget: Invalid brand-color format. Falling back.`);
+  config.brandColor = "#6366f1";
+}
   return config;
 }
   const state = {
@@ -55,7 +82,16 @@ const validPositions = ["left", "right"];
   shadow.innerHTML = `
     <style>
       :host {
-        font-family: Inter, system-ui, -apple-system, sans-serif;
+  ${config.brandColor.includes(",")
+    ? `
+      --brand-gradient: linear-gradient(135deg, ${config.brandColor});
+      --brand-solid: ${config.brandColor.split(",")[0]};
+    `
+    : `
+      --brand-gradient: linear-gradient(135deg, ${config.brandColor}, ${config.brandColor});
+      --brand-solid: ${config.brandColor};
+    `};
+            font-family: Inter, system-ui, -apple-system, sans-serif;
       }
 
       /* THEME VARIABLES */
@@ -82,8 +118,8 @@ const validPositions = ["left", "right"];
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  border: none;
+background: var(--brand-gradient);
+ border: none;
   font-size: 26px;
   cursor: pointer;
   box-shadow: 0 10px 25px rgba(79,70,229,0.4);
@@ -130,7 +166,8 @@ const validPositions = ["left", "right"];
 
       .header {
         padding: 18px;
-        background: linear-gradient(135deg, #4f46e5, #6366f1);
+background: var(--brand-gradient);
+
         color: white;
         display: flex;
         justify-content: space-between;
@@ -172,7 +209,7 @@ const validPositions = ["left", "right"];
 
       .mode-card:hover {
         transform: translateY(-2px);
-        border-color: #6366f1;
+        border-color:var(--brand-solid);
       }
 
       .response-box {
@@ -199,7 +236,7 @@ const validPositions = ["left", "right"];
 
       .user {
         align-self: flex-end;
-        background: #4f46e5;
+background: var(--brand-solid);
         color: white;
       }
 
@@ -257,7 +294,7 @@ const validPositions = ["left", "right"];
         border-radius: 10px;
         border: none;
         cursor: pointer;
-        background: #4f46e5;
+background: var(--brand-solid);
         color: white;
       }
 

@@ -1,6 +1,6 @@
 (function () {
 const scriptTag = document.currentScript;
-
+const API_URL = "https://backendnaveen.vercel.app/api/ai-tutor/generate";
 let config = {
   theme: scriptTag?.getAttribute("theme") || "light",
   defaultMode: scriptTag?.getAttribute("default-mode") || null,
@@ -72,7 +72,10 @@ if (colors.length === 1) {
   const state = {
     question: null,
     mode: null,
-  theme: config.theme === "dark" ? "dark" : "light"
+  theme: config.theme === "dark" ? "dark" : "light",
+  aiCache: {} ,
+  homeView: "landing",
+   chatHistory: [] 
   };
 
   const container = document.createElement("div");
@@ -298,6 +301,249 @@ background: var(--brand-solid);
         color: white;
       }
 
+      /* ================= MOBILE STYLE HOME ================= */
+/* ================= PREMIUM MOBILE HOME ================= */
+
+.app-home {
+  padding: 20px 12px 30px 12px;
+}
+
+.home-top {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 28px;
+}
+.home-avatar {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 20px auto;
+  border-radius: 50%;
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+
+  background: radial-gradient(circle at 30% 30%, #1e293b, #0f172a);
+
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,0.08),
+    0 0 0 6px rgba(99,102,241,0.3),
+    0 12px 30px rgba(0,0,0,0.6);
+}
+.home-heading {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.home-pill {
+  margin: 20px 0 30px 0;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  border-radius: 30px;
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.home-pill:hover {
+  border-color: var(--brand-solid);
+}
+
+/* ================= SOLUTION CARD PREMIUM ================= */
+
+.widget-solution {
+  border-radius: 22px;
+  padding: 20px;
+  margin-bottom: 20px;
+  cursor: pointer;
+
+background: linear-gradient(145deg, #2a3341, #212936);
+
+  border: 1px solid rgba(99,102,241,0.5);
+  box-shadow:
+    0 0 0 1px rgba(99,102,241,0.2),
+    0 12px 30px rgba(0,0,0,0.4);
+
+  transition: all 0.3s ease;
+}
+
+.widget-solution:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px rgba(99,102,241,0.4),
+    0 20px 40px rgba(0,0,0,0.5);
+}
+
+.solution-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.solution-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.solution-preview {
+  display: flex;
+  gap: 12px;
+}
+
+.solution-preview img {
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.sol-preview-left {
+  width: 55%;
+  height: 90px;
+}
+
+.sol-preview-right {
+  width: 35%;
+  height: 90px;
+  opacity: 0.9;
+}
+
+
+/* ================= DECONSTRUCTION CARD PREMIUM ================= */
+.dec-preview-left {
+  width: 35%;
+  height: 65px;
+}
+
+.dec-preview-right {
+  width: 65%;
+  height: 65px;
+  opacity: 0.9;
+}
+.widget-deconstruction {
+  border-radius: 22px;
+  padding: 20px;
+  margin-bottom: 20px;
+  cursor: pointer;
+
+  background: linear-gradient(
+    160deg,
+    #0f172a,
+    #1e293b
+  );
+
+  border: 1px solid rgba(139,92,246,0.5);
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.2),
+    0 12px 30px rgba(0,0,0,0.5);
+
+  transition: all 0.3s ease;
+}
+
+.widget-deconstruction:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.4),
+    0 20px 40px rgba(0,0,0,0.6);
+}
+
+.deconstruction-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.deconstruction-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.deconstruction-preview {
+  display: flex;
+  gap: 5px;
+}
+
+.deconstruction-preview img {
+  border-radius: 12px;
+  object-fit: stretch;
+}
+
+
+  /* MINI ACTIONS WHEN CHAT EXISTS */
+
+.home-mini-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mini-btn {
+  background: var(--brand-solid);
+  color: white;
+  border: none;
+  border-radius: 18px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* BACK BAR */
+
+.back-bar {
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 14px;
+  opacity: 0.8;
+}
+.home-pill {
+  background: rgba(255,255,255,0.08);
+  padding: 14px;
+  border-radius: 28px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.mini-top-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mini-btn {
+  background: var(--brand-solid);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+
+.widgets-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+
+  margin-bottom: 16px;
+  padding-left: 4px;
+
+  color: var(--text);
+  opacity: 0.45;
+}
     </style>
 
     <button class="floating-btn">🤖</button>
@@ -333,15 +579,18 @@ background: var(--brand-solid);
   const input = shadow.querySelector("input");
   const sendBtn = shadow.querySelector("button:last-child");
 
- btn.onclick = () => {
+btn.onclick = () => {
   panel.classList.add("open");
   btn.classList.add("hidden");
 
-  // If default mode is defined and question exists
-  if (config.defaultMode && state.question) {
-    state.mode = config.defaultMode;
-    renderResponse();
-  }
+  // Always reset view when opening
+  state.mode = null;
+
+  questionEl.innerHTML = "";
+  responseEl.innerHTML = "";
+  footer.classList.remove("active");
+
+  renderModes();   // Always show home first
 };
 
   closeBtn.onclick = () => {
@@ -365,105 +614,519 @@ background: var(--brand-solid);
   };
 
 function renderModes() {
+
   modesEl.innerHTML = `
-    <div class="mode-card" data-mode="solution">
-      <strong>📘 View Full Solution</strong>
-      <div style="font-size:13px;opacity:0.8;">
-        Get the complete answer instantly.
-      </div>
-    </div>
+    <div class="app-home">
 
-    <div class="mode-card" data-mode="breakdown">
-      <strong>🧠 Understand Step-by-Step</strong>
-      <div style="font-size:13px;opacity:0.8;">
-        Learn the reasoning behind the solution.
-      </div>
-    </div>
-
-    ${config.enableChat ? `
-      <div class="mode-card" data-mode="chat">
-        <strong>💬 Guided Tutor Chat</strong>
-        <div style="font-size:13px;opacity:0.8;">
-          Solve interactively with hints.
+      <div class="home-top">
+        <div class="home-avatar">🤖</div>
+        <div class="home-heading">
+          Welcome to <br/> AI Chat
         </div>
       </div>
-    ` : ""}
+
+      <div class="home-pill" id="homePill">
+        Ask me anything...
+      </div>
+
+      <div class="widgets-label">WIDGETS</div>
+
+      <div class="widget-solution" data-mode="solution">
+  <div class="solution-title">1. Solution</div>
+  <div class="solution-desc">
+    This gadget provides you the solution with the explanation and the image.
+  </div>
+
+  <div class="solution-preview">
+    <img src="assets/chat-preview.png" class="sol-preview-left" />
+    <img src="assets/image-preview.png" class="sol-preview-right" />
+  </div>
+</div>
+
+      <div class="widget-deconstruction" data-mode="breakdown">
+  <div class="deconstruction-title">2. Deconstruction</div>
+  <div class="deconstruction-desc">
+    Get a guide from Navin to understand how to think like a pro.
+  </div>
+
+  <div class="deconstruction-preview">
+    <img src="assets/deconstruction-left.png" class="dec-preview-left" />
+    <img src="assets/deconstruction-right.png" class="dec-preview-right" />
+  </div>
+</div>
+
+    </div>
   `;
 
-  shadow.querySelectorAll(".mode-card").forEach(card => {
+  // Chat pill click
+  shadow.getElementById("homePill").onclick = () => {
+    state.mode = "chat";
+    modesEl.innerHTML = "";
+    renderResponse();
+  };
+
+  // Card click
+// Card click
+shadow
+  .querySelectorAll(".widget-solution, .widget-deconstruction")
+  .forEach(card => {
     card.onclick = () => {
       state.mode = card.dataset.mode;
+      modesEl.innerHTML = "";
       renderResponse();
     };
   });
 }
-  function renderResponse() {
+function fetchAIResult(questionText, callback) {
 
-    footer.classList.remove("active");
-if (state.mode === "chat" && !config.enableChat) {
-  return;
-}
-    if (state.mode === "solution") {
-      responseEl.innerHTML = `
-        <div class="response-box">
-          Final Answer: x = 5
-        </div>
-      `;
-    }
+  const key = questionText;
 
-    if (state.mode === "breakdown") {
-      responseEl.innerHTML = `
-        <div class="response-box">
-          Step 1: Subtract 5<br/>
-          Step 2: 2x = 10<br/>
-          Step 3: Divide by 2 → x = 5
-        </div>
-      `;
-    }
-
-    if (state.mode === "chat") {
-      responseEl.innerHTML = `<div class="chat-area" id="chatArea"></div>`;
-      footer.classList.add("active");
-
-      const chatArea = shadow.querySelector("#chatArea");
-
-      function addMsg(text, type) {
-        const msg = document.createElement("div");
-        msg.className = "chat-msg " + type;
-        msg.innerText = text;
-        chatArea.appendChild(msg);
-      }
-
-      function showTyping() {
-        const typing = document.createElement("div");
-        typing.className = "chat-msg ai typing";
-        typing.innerHTML = `
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        `;
-        typing.id = "typing";
-        chatArea.appendChild(typing);
-      }
-
-      function removeTyping() {
-        const typing = shadow.querySelector("#typing");
-        if (typing) typing.remove();
-      }
-
-      sendBtn.onclick = () => {
-        if (!input.value.trim()) return;
-        addMsg(input.value, "user");
-        input.value = "";
-        showTyping();
-        setTimeout(() => {
-          removeTyping();
-          addMsg("Let’s isolate x first. What should we subtract?", "ai");
-        }, 1200);
-      };
-    }
+  if (state.aiCache[key]) {
+    callback(state.aiCache[key]);
+    return;
   }
 
+  responseEl.innerHTML = `
+    <div class="response-box" style="text-align:center;">
+      <div style="font-weight:600;">🧠 Processing...</div>
+      <div style="opacity:0.7;font-size:13px;">Building structured reasoning</div>
+    </div>
+  `;
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ problem: questionText })
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (!data.structured_data) {
+      responseEl.innerHTML = `
+        <div class="response-box">Failed to generate result.</div>
+      `;
+      return;
+    }
+
+    state.aiCache[key] = data; // ✅ cache once
+    callback(data);
+
+  })
+  .catch(() => {
+    responseEl.innerHTML = `
+      <div class="response-box">Server connection error.</div>
+    `;
+  });
+}
+function renderResponse() {
+
+  footer.classList.remove("active");
+
+  // No question loaded
+ if (!state.question && (state.mode === "solution" || state.mode === "breakdown")) {
+  responseEl.innerHTML = `
+    <div class="response-box">
+      No question loaded.
+    </div>
+  `;
+  return;
+}
+
+  // Chat disabled protection
+  if (state.mode === "chat" && !config.enableChat) {
+    return;
+  }
+
+  // ===============================
+  // SOLUTION OR BREAKDOWN (Single API Call Logic)
+  // ===============================
+  if (state.mode === "solution" || state.mode === "breakdown") {
+questionEl.innerHTML = `
+  <div class="back-bar">
+    ← Back
+  </div>
+`;
+
+shadow.querySelector(".back-bar").onclick = () => {
+  state.mode = null;
+  questionEl.innerHTML = "";      // ← THIS WAS MISSING
+  responseEl.innerHTML = "";
+  footer.classList.remove("active");
+  renderModes();
+};
+    const questionKey = state.question.text;
+
+    // If already cached → render immediately
+    if (state.aiCache && state.aiCache[questionKey]) {
+
+      const cachedData = state.aiCache[questionKey];
+
+      if (state.mode === "solution") {
+        renderSolutionUI(cachedData);
+      } else {
+        renderBreakdownUI(cachedData);
+      }
+
+      return;
+    }
+
+    // Show loading UI
+    responseEl.innerHTML = `
+      <div class="response-box" style="text-align:center;">
+        <div style="font-weight:600;margin-bottom:6px;">
+          🧠 Processing...
+        </div>
+        <div style="opacity:0.7;font-size:13px;">
+          Generating structured intelligence
+        </div>
+      </div>
+    `;
+
+    // Call API once
+    fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        problem: state.question.text
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+      if (!data || !data.structured_data) {
+        responseEl.innerHTML = `
+          <div class="response-box">
+            Failed to generate AI response.
+          </div>
+        `;
+        return;
+      }
+
+      // Ensure cache object exists
+      if (!state.aiCache) {
+        state.aiCache = {};
+      }
+
+      // Save once
+      state.aiCache[questionKey] = data;
+
+      // Render according to active mode
+      if (state.mode === "solution") {
+        renderSolutionUI(data);
+      } else {
+        renderBreakdownUI(data);
+      }
+
+    })
+    .catch(() => {
+      responseEl.innerHTML = `
+        <div class="response-box">
+          Error connecting to AI server.
+        </div>
+      `;
+    });
+
+    return;
+  }
+
+  // ===============================
+  // CHAT MODE (unchanged)
+  // ===============================
+  // ===============================
+// CHAT MODE (FULLY FIXED)
+// ===============================
+if (state.mode === "chat") {
+
+  questionEl.innerHTML = `
+    <div class="back-bar">← Back</div>
+  `;
+
+shadow.querySelector(".back-bar").onclick = () => {
+  state.mode = null;
+  questionEl.innerHTML = "";      // ← CLEAR BACK
+  responseEl.innerHTML = "";
+  footer.classList.remove("active");
+  renderModes();
+};
+
+  const hasChatStarted = state.chatHistory.length > 0;
+
+
+    modesEl.innerHTML = `
+      <div class="mini-top-actions">
+        <button class="mini-btn" data-mode="solution">Go to solution directly</button>
+        <button class="mini-btn" data-mode="breakdown">Go to guided breakdown</button>
+      </div>
+    `;
+
+    shadow.querySelectorAll(".mini-btn").forEach(btn => {
+      btn.onclick = () => {
+        state.mode = btn.dataset.mode;
+        renderResponse();
+      };
+    });
+ 
+  // Render chat area
+  responseEl.innerHTML = `<div class="chat-area" id="chatArea"></div>`;
+  footer.classList.add("active");
+
+  const chatArea = shadow.querySelector("#chatArea");
+
+  // Render existing history
+  state.chatHistory.forEach(msg => {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "chat-msg " + msg.type;
+    msgDiv.innerText = msg.text;
+    chatArea.appendChild(msgDiv);
+  });
+
+  // Send logic
+  sendBtn.onclick = () => {
+    if (!input.value.trim()) return;
+
+    const userText = input.value;
+
+    // Add user message
+    state.chatHistory.push({ type: "user", text: userText });
+
+    input.value = "";
+
+    renderResponse(); // Re-render immediately
+
+    // Fake AI reply
+    setTimeout(() => {
+      state.chatHistory.push({
+        type: "ai",
+        text: "Let’s think structurally..."
+      });
+
+      renderResponse(); // Re-render again
+    }, 800);
+  };
+
+  return;
+}
+}
+function renderBreakdownUI(data) {
+
+  const structured = data.structured_data;
+  let html = "";
+
+  html += `
+    <div style="margin-bottom:18px;">
+      <div style="
+        font-weight:700;
+        font-size:16px;
+        margin-bottom:4px;
+        color:var(--brand-solid);
+      ">
+        🧠 Mentored Guided Thinking
+      </div>
+      <div style="font-size:13px;opacity:0.7;">
+        Structured reasoning aligned with conceptual insight
+      </div>
+    </div>
+  `;
+
+  // Step Cards
+  structured.reasoning_stages?.forEach((stage, index) => {
+    html += `
+      <div style="
+        margin-bottom:16px;
+        padding:16px;
+        border-radius:14px;
+        background: var(--card);
+        border:1px solid var(--border);
+        box-shadow:0 4px 12px rgba(0,0,0,0.05);
+        transition:all 0.2s ease;
+      ">
+        <div style="
+          font-weight:600;
+          margin-bottom:8px;
+          color:var(--brand-solid);
+        ">
+          Step ${index + 1}
+        </div>
+
+        <div style="margin-bottom:6px;">
+          <strong>Goal</strong><br/>
+          <span style="opacity:0.85;">${stage.goal}</span>
+        </div>
+
+        <div style="margin-bottom:6px;">
+          <strong>Concept Focus</strong><br/>
+          <span style="opacity:0.85;">${stage.concept_focus}</span>
+        </div>
+
+        <div>
+          <strong>Expected Student Action</strong><br/>
+          <span style="opacity:0.85;">${stage.expected_student_action}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  // Final Answer
+  if (structured.final_answer) {
+    html += `
+      <div style="
+        margin-top:10px;
+        padding:16px;
+        border-radius:14px;
+        background: rgba(99,102,241,0.08);
+        border:1px solid var(--brand-solid);
+        font-weight:600;
+      ">
+        🎯 Final Structural Answer<br/>
+        <div style="margin-top:6px;font-size:15px;">
+          ${structured.final_answer}
+        </div>
+      </div>
+    `;
+  }
+
+  // Image (Expandable)
+  if (data.image && data.image.image_base64) {
+    html += `
+      <div style="margin-top:16px;text-align:center;">
+        <img 
+          id="expandableImg"
+          src="data:${data.image.mime_type};base64,${data.image.image_base64}" 
+          style="
+            width:100%;
+            border-radius:12px;
+            cursor:pointer;
+            box-shadow:0 6px 18px rgba(0,0,0,0.15);
+            transition:transform 0.2s ease;
+          "
+        />
+      </div>
+    `;
+  }
+
+  responseEl.innerHTML = html;
+
+  // Attach expand logic
+  const img = shadow.querySelector("#expandableImg");
+  if (img) {
+    img.onclick = () => openFullscreenImage(img.src);
+  }
+}
+function renderSolutionUI(data) {
+
+  const structured = data.structured_data;
+  let html = "";
+
+  html += `
+    <div style="margin-bottom:18px;">
+      <div style="
+        font-weight:700;
+        font-size:16px;
+        color:var(--brand-solid);
+      ">
+        Complete Solution
+      </div>
+    </div>
+  `;
+
+  if (structured.final_answer) {
+    html += `
+      <div style="
+        padding:16px;
+        border-radius:14px;
+        background: rgba(99,102,241,0.08);
+        border:1px solid var(--brand-solid);
+        font-weight:600;
+        margin-bottom:12px;
+      ">
+        Final Answer:<br/>
+        <div style="margin-top:6px;font-size:15px;">
+          ${structured.final_answer}
+        </div>
+      </div>
+    `;
+  }
+
+  if (structured.final_explanation) {
+    html += `
+      <div style="
+        padding:16px;
+        border-radius:14px;
+        background: var(--card);
+        border:1px solid var(--border);
+        margin-bottom:12px;
+      ">
+        <strong>Explanation</strong><br/><br/>
+        ${structured.final_explanation}
+      </div>
+    `;
+  }
+
+  if (data.image && data.image.image_base64) {
+    html += `
+      <div style="text-align:center;margin-top:12px;">
+        <img 
+          id="expandableImg"
+          src="data:${data.image.mime_type};base64,${data.image.image_base64}" 
+          style="
+            width:100%;
+            border-radius:12px;
+            cursor:pointer;
+            box-shadow:0 6px 18px rgba(0,0,0,0.15);
+          "
+        />
+      </div>
+    `;
+  }
+
+  responseEl.innerHTML = html;
+
+  const img = shadow.querySelector("#expandableImg");
+  if (img) {
+    img.onclick = () => openFullscreenImage(img.src);
+  }
+}
+function openFullscreenImage(src) {
+
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.background = "rgba(0,0,0,0.85)";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.zIndex = "9999999";
+
+  overlay.innerHTML = `
+    <div style="position:relative;width:90%;max-width:900px;">
+      <span id="closeOverlay" style="
+        position:absolute;
+        top:-40px;
+        right:0;
+        color:white;
+        font-size:28px;
+        cursor:pointer;
+      ">✕</span>
+      <img src="${src}" style="
+        width:100%;
+        border-radius:12px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.5);
+      " />
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector("#closeOverlay").onclick = () => overlay.remove();
+  overlay.onclick = (e) => {
+    if (e.target === overlay) overlay.remove();
+  };
+}
   window.AIWidget = {
     loadQuestion: function (q) {
       state.question = q;

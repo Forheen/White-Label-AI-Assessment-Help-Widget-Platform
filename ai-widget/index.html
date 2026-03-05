@@ -1,29 +1,161 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Widget Test</title>
+<title>AI Tutor Demo</title>
+
+<style>
+
+body{
+font-family: system-ui;
+background:#f5f7fb;
+padding:60px;
+display:flex;
+justify-content:center;
+}
+
+.container{
+width:520px;
+background:white;
+padding:30px;
+border-radius:14px;
+box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+.title{
+font-size:22px;
+font-weight:600;
+margin-bottom:18px;
+}
+
+.inputBox{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+input{
+flex:1;
+padding:12px 14px;
+border-radius:10px;
+border:1px solid #ddd;
+font-size:15px;
+outline:none;
+transition:0.2s;
+}
+
+input:focus{
+border-color:#6366f1;
+box-shadow:0 0 0 2px rgba(99,102,241,0.15);
+}
+
+button{
+padding:12px 18px;
+border:none;
+border-radius:10px;
+background:#6366f1;
+color:white;
+font-size:14px;
+cursor:pointer;
+transition:0.2s;
+}
+
+button:hover{
+transform:translateY(-1px);
+box-shadow:0 6px 14px rgba(0,0,0,0.12);
+}
+
+button:disabled{
+background:#ccc;
+cursor:not-allowed;
+}
+
+.questionCard{
+margin-top:15px;
+padding:18px;
+background:#f9fafb;
+border-radius:12px;
+border:1px solid #eee;
+font-size:16px;
+opacity:0;
+transform:translateY(10px);
+transition:0.3s;
+}
+
+.questionCard.show{
+opacity:1;
+transform:translateY(0);
+}
+
+.helper{
+font-size:13px;
+color:#777;
+margin-top:6px;
+}
+
+</style>
 </head>
+
 <body>
 
-<h2 class="question">
-If 2x + 5 = 15, what is the value of x?
-</h2>
+<div class="container">
 
-<script src="./widget.js" 
-theme="dark"  
+<div class="title">
+Ask your question
+</div>
 
-position="right" 
-default-mode="chat" 
-enable-chat="true"></script>
+<div class="inputBox">
+<input id="questionInput" placeholder="Type your question..." />
+<button id="submitBtn" disabled>Submit</button>
+</div>
+
+<div class="helper">
+Example: If 2x + 5 = 15, what is x?
+</div>
+
+<div id="questionDisplay" class="questionCard"></div>
+
+</div>
+
+
+<script 
+src="./widget.js"
+theme="dark"
+position="right"
+default-mode="chat"
+enable-chat="true">
+</script>
+
 
 <script>
-  const questionText = document.querySelector(".question").innerText;
 
-  AIWidget.loadQuestion({
-    id: "Q1",
-    text: questionText,
-    
-  });
+const input = document.getElementById("questionInput");
+const button = document.getElementById("submitBtn");
+const display = document.getElementById("questionDisplay");
+
+input.addEventListener("input",()=>{
+
+button.disabled = !input.value.trim();
+
+});
+
+button.onclick = ()=>{
+
+const text = input.value.trim();
+if(!text) return;
+
+display.innerText = text;
+display.classList.add("show");
+
+AIWidget.loadQuestion({
+id:"Q1",
+text:text
+});
+
+input.value="";
+button.disabled=true;
+
+}
+
 </script>
 
 </body>

@@ -1049,7 +1049,7 @@ function renderSolutionUI(data) {
     `;
   }
 
-  if (structured.normal_explanation) {
+  if (structured.final_explanation) {
     html += `
       <div style="
         padding:16px;
@@ -1059,7 +1059,7 @@ function renderSolutionUI(data) {
         margin-bottom:12px;
       ">
         <strong>Explanation</strong><br/><br/>
-        ${structured.normal_explanation}
+        ${structured.final_explanation}
       </div>
     `;
   }

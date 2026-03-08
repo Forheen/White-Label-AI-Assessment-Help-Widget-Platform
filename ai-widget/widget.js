@@ -79,6 +79,8 @@ if (colors.length === 1) {
   homeView: "landing",
    chatHistory: [] ,
    chatSessionId: null,
+     chatStarting: false
+
   };
 
   const container = document.createElement("div");
@@ -857,53 +859,61 @@ if (state.mode === "chat") {
     renderModes();
   };
 
-  // Start session if not started
-  if (!state.chatSessionId) {
+ // Start session if not started
+if (!state.chatSessionId && !state.chatStarting) {
+
+  state.chatStarting = true;
+
+  responseEl.innerHTML = `
+    <div class="response-box">
+      <div class="typing">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  `;
+
+  fetch(CHAT_START_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      problem: state.question.text
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (!data.session_id) {
+      throw new Error("Invalid session response");
+    }
+
+    state.chatSessionId = data.session_id;
+    state.chatStarting = false;
+
+    state.chatHistory.push({
+      type: "ai",
+      text: data.message || "Let's begin."
+    });
+
+    renderResponse();
+
+  })
+  .catch(() => {
+
+    state.chatStarting = false;
 
     responseEl.innerHTML = `
       <div class="response-box">
-        <div class="typing">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
+        Unable to start AI session.
       </div>
     `;
+  });
 
-    fetch(CHAT_START_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        problem: state.question.text
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-
-      state.chatSessionId = data.session_id;
-
-      state.chatHistory.push({
-        type: "ai",
-        text: data.message
-      });
-
-      renderResponse();
-
-    })
-    .catch(() => {
-
-      state.chatHistory.push({
-        type: "ai",
-        text: "Unable to start AI session."
-      });
-
-      renderResponse();
-    });
-
-    return;
-  }
+  return;
+}
 
   // Mini navigation
   modesEl.innerHTML = `

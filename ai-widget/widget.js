@@ -1,6 +1,8 @@
 (function () {
 const scriptTag = document.currentScript;
 const API_URL = "https://backendnaveen.vercel.app/api/ai-tutor/generate";
+const CHAT_START_URL = "https://backendnaveen.vercel.app/api/ai-tutor/chat/start";
+const CHAT_MESSAGE_URL = "https://backendnaveen.vercel.app/api/ai-tutor/chat/message";
 let config = {
   theme: scriptTag?.getAttribute("theme") || "light",
   defaultMode: scriptTag?.getAttribute("default-mode") || null,
@@ -75,7 +77,8 @@ if (colors.length === 1) {
   theme: config.theme === "dark" ? "dark" : "light",
   aiCache: {} ,
   homeView: "landing",
-   chatHistory: [] 
+   chatHistory: [] ,
+   chatSessionId: null,
   };
 
   const container = document.createElement("div");
@@ -837,44 +840,93 @@ shadow.querySelector(".back-bar").onclick = () => {
   // ===============================
 // CHAT MODE (FULLY FIXED)
 // ===============================
+// ===============================
+// CHAT MODE (Backend Connected)
+// ===============================
 if (state.mode === "chat") {
 
   questionEl.innerHTML = `
     <div class="back-bar">← Back</div>
   `;
 
-shadow.querySelector(".back-bar").onclick = () => {
-  state.mode = null;
-  questionEl.innerHTML = "";      // ← CLEAR BACK
-  responseEl.innerHTML = "";
-  footer.classList.remove("active");
-  renderModes();
-};
+  shadow.querySelector(".back-bar").onclick = () => {
+    state.mode = null;
+    questionEl.innerHTML = "";
+    responseEl.innerHTML = "";
+    footer.classList.remove("active");
+    renderModes();
+  };
 
-  const hasChatStarted = state.chatHistory.length > 0;
+  // Start session if not started
+  if (!state.chatSessionId) {
 
-
-    modesEl.innerHTML = `
-      <div class="mini-top-actions">
-        <button class="mini-btn" data-mode="solution">Go to solution directly</button>
-        <button class="mini-btn" data-mode="breakdown">Go to guided breakdown</button>
+    responseEl.innerHTML = `
+      <div class="response-box">
+        <div class="typing">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
       </div>
     `;
 
-    shadow.querySelectorAll(".mini-btn").forEach(btn => {
-      btn.onclick = () => {
-        state.mode = btn.dataset.mode;
-        renderResponse();
-      };
+    fetch(CHAT_START_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        problem: state.question.text
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+      state.chatSessionId = data.session_id;
+
+      state.chatHistory.push({
+        type: "ai",
+        text: data.message
+      });
+
+      renderResponse();
+
+    })
+    .catch(() => {
+
+      state.chatHistory.push({
+        type: "ai",
+        text: "Unable to start AI session."
+      });
+
+      renderResponse();
     });
- 
-  // Render chat area
+
+    return;
+  }
+
+  // Mini navigation
+  modesEl.innerHTML = `
+    <div class="mini-top-actions">
+      <button class="mini-btn" data-mode="solution">Go to solution</button>
+      <button class="mini-btn" data-mode="breakdown">Guided breakdown</button>
+    </div>
+  `;
+
+  shadow.querySelectorAll(".mini-btn").forEach(btn => {
+    btn.onclick = () => {
+      state.mode = btn.dataset.mode;
+      renderResponse();
+    };
+  });
+
+  // Chat container
   responseEl.innerHTML = `<div class="chat-area" id="chatArea"></div>`;
   footer.classList.add("active");
 
   const chatArea = shadow.querySelector("#chatArea");
 
-  // Render existing history
+  // Render history
   state.chatHistory.forEach(msg => {
     const msgDiv = document.createElement("div");
     msgDiv.className = "chat-msg " + msg.type;
@@ -882,28 +934,73 @@ shadow.querySelector(".back-bar").onclick = () => {
     chatArea.appendChild(msgDiv);
   });
 
-  // Send logic
+  // Scroll to bottom
+  chatArea.scrollTop = chatArea.scrollHeight;
+
+  // Send message
   sendBtn.onclick = () => {
-    if (!input.value.trim()) return;
 
-    const userText = input.value;
-
-    // Add user message
-    state.chatHistory.push({ type: "user", text: userText });
+    const userText = input.value.trim();
+    if (!userText) return;
 
     input.value = "";
 
-    renderResponse(); // Re-render immediately
+    state.chatHistory.push({
+      type: "user",
+      text: userText
+    });
 
-    // Fake AI reply
-    setTimeout(() => {
+    renderResponse();
+
+    // Typing indicator
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "chat-msg ai";
+    typingDiv.innerHTML = `
+      <div class="typing">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    `;
+
+    chatArea.appendChild(typingDiv);
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    fetch(CHAT_MESSAGE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        session_id: state.chatSessionId,
+        message: userText
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+      typingDiv.remove();
+
       state.chatHistory.push({
         type: "ai",
-        text: "Let’s think structurally..."
+        text: data.reply
       });
 
-      renderResponse(); // Re-render again
-    }, 800);
+      renderResponse();
+
+    })
+    .catch(() => {
+
+      typingDiv.remove();
+
+      state.chatHistory.push({
+        type: "ai",
+        text: "Server error while processing message."
+      });
+
+      renderResponse();
+    });
+
   };
 
   return;
@@ -1127,13 +1224,19 @@ function openFullscreenImage(src) {
     if (e.target === overlay) overlay.remove();
   };
 }
-  window.AIWidget = {
-    loadQuestion: function (q) {
-      state.question = q;
-      questionEl.innerHTML =
-        `<div class="question-box">${q.text}</div>`;
-      renderModes();
-    }
-  };
+ window.AIWidget = {
+  loadQuestion: function (q) {
+
+    state.question = q;
+
+    state.chatHistory = [];
+    state.chatSessionId = null;
+
+    questionEl.innerHTML =
+      `<div class="question-box">${q.text}</div>`;
+
+    renderModes();
+  }
+};
 
 })();

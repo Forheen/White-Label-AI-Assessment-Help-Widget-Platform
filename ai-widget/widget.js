@@ -1036,9 +1036,24 @@ function renderBreakdownUI(data) {
       </div>
     </div>
   `;
+  if (structured.final_explanation) {
+    html += `
+      <div style="
+        padding:16px;
+        border-radius:14px;
+        background: var(--card);
+        border:1px solid var(--border);
+        margin-bottom:12px;
+      ">
+        <strong>Deconstructed Explanation</strong><br/><br/>
+        ${structured.final_explanation}
+      </div>
+    `;
+  }
 
+  
   // Step Cards
-  structured.reasoning_stages?.forEach((stage, index) => {
+  structured.key_reasoning_lessons?.forEach((stage, index) => {
     html += `
       <div style="
         margin-bottom:16px;
@@ -1049,27 +1064,10 @@ function renderBreakdownUI(data) {
         box-shadow:0 4px 12px rgba(0,0,0,0.05);
         transition:all 0.2s ease;
       ">
-        <div style="
-          font-weight:600;
-          margin-bottom:8px;
-          color:var(--brand-solid);
-        ">
-          Step ${index + 1}
-        </div>
+   
 
         <div style="margin-bottom:6px;">
-          <strong>Goal</strong><br/>
-          <span style="opacity:0.85;">${stage.goal}</span>
-        </div>
-
-        <div style="margin-bottom:6px;">
-          <strong>Concept Focus</strong><br/>
-          <span style="opacity:0.85;">${stage.concept_focus}</span>
-        </div>
-
-        <div>
-          <strong>Expected Student Action</strong><br/>
-          <span style="opacity:0.85;">${stage.expected_student_action}</span>
+          <span style="opacity:0.85;">${stage}</span>
         </div>
       </div>
     `;
@@ -1171,6 +1169,7 @@ function renderSolutionUI(data) {
     `;
   }
 
+  
   if (data.image && data.image.image_base64) {
     html += `
       <div style="text-align:center;margin-top:12px;">

@@ -1021,6 +1021,9 @@ function renderBreakdownUI(data) {
   const structured = data.structured_data;
   let html = "";
 
+  // ===============================
+  // HEADER
+  // ===============================
   html += `
     <div style="margin-bottom:18px;">
       <div style="
@@ -1029,73 +1032,138 @@ function renderBreakdownUI(data) {
         margin-bottom:4px;
         color:var(--brand-solid);
       ">
-        🧠 Mentored Guided Thinking
+        🧠 Guided Breakdown
       </div>
       <div style="font-size:13px;opacity:0.7;">
-        Structured reasoning aligned with conceptual insight
+        Understanding the reasoning behind the solution
       </div>
     </div>
   `;
+
+
+  // ===============================
+  // STRUCTURED EXPLANATION
+  // ===============================
   if (structured.final_explanation) {
+
     html += `
       <div style="
         padding:16px;
         border-radius:14px;
-        background: var(--card);
+        background:var(--card);
         border:1px solid var(--border);
-        margin-bottom:12px;
+        margin-bottom:14px;
       ">
-        <strong>Deconstructed Explanation</strong><br/><br/>
-        ${structured.final_explanation}
+
+        <div style="
+          font-weight:600;
+          margin-bottom:8px;
+        ">
+          Explanation
+        </div>
+
+        <div style="
+          font-size:14px;
+          line-height:1.65;
+          white-space:pre-line;
+        ">
+          ${structured.final_explanation}
+        </div>
+
       </div>
     `;
   }
 
-  
-  // Step Cards
-  structured.key_reasoning_lessons?.forEach((stage, index) => {
-    html += `
-      <div style="
-        margin-bottom:16px;
-        padding:16px;
-        border-radius:14px;
-        background: var(--card);
-        border:1px solid var(--border);
-        box-shadow:0 4px 12px rgba(0,0,0,0.05);
-        transition:all 0.2s ease;
-      ">
-   
 
-        <div style="margin-bottom:6px;">
-          <span style="opacity:0.85;">${stage}</span>
-        </div>
-      </div>
-    `;
-  });
-
-  // Final Answer
+  // ===============================
+  // FINAL ANSWER
+  // ===============================
   if (structured.final_answer) {
+
     html += `
       <div style="
-        margin-top:10px;
         padding:16px;
         border-radius:14px;
-        background: rgba(99,102,241,0.08);
+        background:rgba(99,102,241,0.08);
         border:1px solid var(--brand-solid);
         font-weight:600;
+        margin-bottom:16px;
       ">
-        🎯 Final Structural Answer<br/>
-        <div style="margin-top:6px;font-size:15px;">
+
+        🎯 Final Answer
+
+        <div style="
+          margin-top:6px;
+          font-size:16px;
+          font-weight:600;
+        ">
           ${structured.final_answer}
         </div>
+
       </div>
     `;
   }
 
-  // Image (Expandable)
-  if (data.image && data.image.image_base64) {
+
+  // ===============================
+  // KEY INSIGHTS (AT LAST)
+  // ===============================
+  if (structured.key_reasoning_lessons && structured.key_reasoning_lessons.length) {
+
     html += `
-      <div style="margin-top:16px;text-align:center;">
+      <div style="
+        font-weight:600;
+        font-size:13px;
+        opacity:0.7;
+        letter-spacing:1px;
+        margin-bottom:10px;
+      ">
+        KEY INSIGHTS
+      </div>
+    `;
+
+    structured.key_reasoning_lessons.forEach(insight => {
+
+      html += `
+        <div style="
+          margin-bottom:10px;
+          padding:14px;
+          border-radius:12px;
+          background:var(--card);
+          border:1px solid var(--border);
+          display:flex;
+          gap:10px;
+          align-items:flex-start;
+        ">
+
+          <div style="
+            font-size:16px;
+            margin-top:2px;
+          ">
+            💡
+          </div>
+
+          <div style="
+            font-size:14px;
+            line-height:1.5;
+          ">
+            ${insight}
+          </div>
+
+        </div>
+      `;
+    });
+  }
+
+
+  // ===============================
+  // IMAGE (IF PRESENT)
+  // ===============================
+  if (data.image && data.image.image_base64) {
+
+    html += `
+      <div style="margin-top:18px;text-align:center;">
+
         <img 
           id="expandableImg"
           src="data:${data.image.mime_type};base64,${data.image.image_base64}" 
@@ -1104,20 +1172,24 @@ function renderBreakdownUI(data) {
             border-radius:12px;
             cursor:pointer;
             box-shadow:0 6px 18px rgba(0,0,0,0.15);
-            transition:transform 0.2s ease;
           "
         />
+
       </div>
     `;
   }
 
+
+  // Render HTML
   responseEl.innerHTML = html;
 
-  // Attach expand logic
+
+  // Expand image logic
   const img = shadow.querySelector("#expandableImg");
   if (img) {
     img.onclick = () => openFullscreenImage(img.src);
   }
+
 }
 function renderSolutionUI(data) {
 

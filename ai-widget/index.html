@@ -117,7 +117,6 @@ Example: If 2x + 5 = 15, what is x?
 </div>
 
 
-<!-- AI Widget -->
 <script 
 src="./widget.js"
 theme="dark"
@@ -133,48 +132,29 @@ const input = document.getElementById("questionInput");
 const button = document.getElementById("submitBtn");
 const display = document.getElementById("questionDisplay");
 
-let questionCounter = 0;
-
-input.addEventListener("input", () => {
+input.addEventListener("input",()=>{
 
 button.disabled = !input.value.trim();
 
 });
 
-
-button.onclick = () => {
+button.onclick = ()=>{
 
 const text = input.value.trim();
 if(!text) return;
 
-/* unique question id */
-questionCounter++;
-
-/* reset animation */
-
-display.classList.remove("show");
-display.innerText = "";
-
-/* small delay so animation restarts */
-setTimeout(()=>{
-
 display.innerText = text;
 display.classList.add("show");
 
-},100);
-
-
-/* load question to widget */
-
 AIWidget.loadQuestion({
-id: "Q" + questionCounter,
-text: text
+id:"Q1",
+text:text
 });
 
 input.value="";
 button.disabled=true;
 
-};
+}
 
 </script>
 

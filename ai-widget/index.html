@@ -116,7 +116,6 @@ Example: If 2x + 5 = 15, what is x?
 
 </div>
 
-
 <script 
 src="./widget.js"
 theme="dark"
@@ -125,12 +124,13 @@ default-mode="chat"
 enable-chat="true">
 </script>
 
-
 <script>
 
 const input = document.getElementById("questionInput");
 const button = document.getElementById("submitBtn");
 const display = document.getElementById("questionDisplay");
+
+let currentQuestionId = 0;
 
 input.addEventListener("input",()=>{
 
@@ -143,11 +143,32 @@ button.onclick = ()=>{
 const text = input.value.trim();
 if(!text) return;
 
+currentQuestionId++;
+
+/* RESET UI FIRST */
+
+display.classList.remove("show");
+display.innerText = "";
+
+/* small delay so animation restarts */
+
+setTimeout(()=>{
+
 display.innerText = text;
 display.classList.add("show");
 
+},100);
+
+/* RESET WIDGET STATE */
+
+if(window.AIWidget && AIWidget.reset){
+AIWidget.reset();
+}
+
+/* LOAD NEW QUESTION */
+
 AIWidget.loadQuestion({
-id:"Q1",
+id:"Q"+currentQuestionId,
 text:text
 });
 

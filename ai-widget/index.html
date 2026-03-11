@@ -27,25 +27,36 @@ font-weight:600;
 margin-bottom:18px;
 }
 
-.inputBox{
+/* STACKED LAYOUT */
+
+.inputGroup{
 display:flex;
-gap:10px;
+flex-direction:column;
+gap:12px;
 margin-bottom:20px;
 }
 
-input{
-flex:1;
+textarea{
 padding:12px 14px;
 border-radius:10px;
 border:1px solid #ddd;
 font-size:15px;
 outline:none;
-transition:0.2s;
+transition:.2s;
+resize:vertical;
+min-height:70px;
+font-family:system-ui;
 }
 
-input:focus{
+textarea:focus{
 border-color:#6366f1;
-box-shadow:0 0 0 2px rgba(99,102,241,0.15);
+box-shadow:0 0 0 2px rgba(99,102,241,.15);
+}
+
+.fileRow{
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
 button{
@@ -56,12 +67,12 @@ background:#6366f1;
 color:white;
 font-size:14px;
 cursor:pointer;
-transition:0.2s;
+transition:.2s;
 }
 
 button:hover{
 transform:translateY(-1px);
-box-shadow:0 6px 14px rgba(0,0,0,0.12);
+box-shadow:0 6px 14px rgba(0,0,0,.12);
 }
 
 button:disabled{
@@ -69,27 +80,196 @@ background:#ccc;
 cursor:not-allowed;
 }
 
-.questionCard{
-margin-top:15px;
-padding:18px;
-background:#f9fafb;
-border-radius:12px;
+/* IMAGE PREVIEW */
+
+.previewContainer{
+
+display:flex;
+
+gap:10px;
+
+flex-wrap:wrap;
+
+}
+
+.previewCard{
+
+position:relative;
+
+}
+
+.previewCard img{
+
+width:85px;
+
+height:85px;
+
+border-radius:10px;
+
+object-fit:cover;
+
 border:1px solid #eee;
-font-size:16px;
+
+cursor:pointer;
+
+}
+
+.remove{
+
+position:absolute;
+
+top:-6px;
+
+right:-6px;
+
+background:#ef4444;
+
+color:white;
+
+width:20px;
+
+height:20px;
+
+border-radius:50%;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:12px;
+
+cursor:pointer;
+
+}
+
+/* DISPLAY CARD */
+
+.questionCard{
+
+margin-top:15px;
+
+padding:18px;
+
+background:#f9fafb;
+
+border-radius:12px;
+
+border:1px solid #eee;
+
+font-size:15px;
+
 opacity:0;
+
 transform:translateY(10px);
-transition:0.3s;
+
+transition:.3s;
+
 }
 
 .questionCard.show{
+
 opacity:1;
+
 transform:translateY(0);
+
+}
+
+.displayImages{
+
+display:flex;
+
+gap:10px;
+
+margin-top:10px;
+
+flex-wrap:wrap;
+
+}
+
+.displayImages img{
+
+width:90px;
+
+height:90px;
+
+border-radius:10px;
+
+object-fit:cover;
+
+cursor:pointer;
+
+border:1px solid #ddd;
+
+}
+
+/* IMAGE VIEWER */
+
+.viewer{
+
+position:fixed;
+
+top:0;
+
+left:0;
+
+width:100%;
+
+height:100%;
+
+background:rgba(0,0,0,.85);
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+z-index:9999;
+
+}
+
+.viewer img{
+
+max-width:90%;
+
+max-height:90%;
+
+border-radius:12px;
+
+}
+
+.hidden{
+
+display:none;
+
+}
+
+#closeViewer{
+
+position:absolute;
+
+top:30px;
+
+right:40px;
+
+color:white;
+
+font-size:28px;
+
+cursor:pointer;
+
 }
 
 .helper{
+
 font-size:13px;
+
 color:#777;
+
 margin-top:6px;
+
 }
 
 </style>
@@ -103,19 +283,51 @@ margin-top:6px;
 Ask your question
 </div>
 
-<div class="inputBox">
-<input id="questionInput" placeholder="Type your question..." />
-<button id="submitBtn" disabled>Submit</button>
+<div class="inputGroup">
+
+<textarea
+id="questionInput"
+placeholder="Type your question..."
+></textarea>
+
+<div class="fileRow">
+
+<input 
+type="file"
+id="imageInput"
+accept="image/*"
+multiple
+>
+
+<button id="submitBtn" disabled>
+Submit
+</button>
+
+</div>
+
+<div id="preview" class="previewContainer"></div>
+
 </div>
 
 <div class="helper">
-Example: If 2x + 5 = 15, what is x?
+
+You can type question, upload image, or both
+
 </div>
 
 <div id="questionDisplay" class="questionCard"></div>
 
 </div>
 
+<!-- IMAGE VIEWER -->
+
+<div id="viewer" class="viewer hidden">
+
+<span id="closeViewer">✕</span>
+
+<img id="viewerImg">
+
+</div>
 
 <script 
 src="./widget.js"
@@ -125,36 +337,187 @@ default-mode="chat"
 enable-chat="true">
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
 
-const input = document.getElementById("questionInput");
-const button = document.getElementById("submitBtn");
-const display = document.getElementById("questionDisplay");
+const input=document.getElementById("questionInput");
 
-input.addEventListener("input",()=>{
+const button=document.getElementById("submitBtn");
 
-button.disabled = !input.value.trim();
+const display=document.getElementById("questionDisplay");
+
+const imageInput=document.getElementById("imageInput");
+
+const preview=document.getElementById("preview");
+
+const viewer=document.getElementById("viewer");
+
+const viewerImg=document.getElementById("viewerImg");
+
+const closeViewer=document.getElementById("closeViewer");
+
+let imageFiles=[];
+
+let uploadedImages=[];
+
+function fileToBase64(file){
+
+return new Promise(resolve=>{
+
+const reader=new FileReader();
+
+reader.onload=()=>{
+
+resolve(reader.result.split(",")[1]);
+
+};
+
+reader.readAsDataURL(file);
 
 });
 
-button.onclick = ()=>{
+}
 
-const text = input.value.trim();
-if(!text) return;
+function checkEnable(){
 
-display.innerText = text;
+button.disabled=
+!input.value.trim() &&
+imageFiles.length===0;
+
+}
+
+input.addEventListener("input",checkEnable);
+
+imageInput.addEventListener("change",()=>{
+
+for(const file of imageInput.files){
+
+imageFiles.push(file);
+
+}
+
+renderPreview();
+
+checkEnable();
+
+});
+
+function renderPreview(){
+
+preview.innerHTML="";
+
+imageFiles.forEach((file,index)=>{
+
+const url=URL.createObjectURL(file);
+
+const div=document.createElement("div");
+
+div.className="previewCard";
+
+div.innerHTML=`
+
+<img src="${url}">
+
+<div class="remove">✕</div>
+
+`;
+
+div.querySelector("img").onclick=()=>{
+
+viewerImg.src=url;
+
+viewer.classList.remove("hidden");
+
+};
+
+div.querySelector(".remove").onclick=()=>{
+
+imageFiles.splice(index,1);
+
+renderPreview();
+
+checkEnable();
+
+};
+
+preview.appendChild(div);
+
+});
+
+}
+
+closeViewer.onclick=()=>{
+
+viewer.classList.add("hidden");
+
+};
+
+button.onclick=async()=>{
+
+const text=input.value.trim();
+
+uploadedImages=[];
+
+for(const file of imageFiles){
+
+const base64=await fileToBase64(file);
+
+uploadedImages.push(base64);
+
+}
+
+display.innerHTML=`
+
+<div>${text || "Image question uploaded"}</div>
+
+<div class="displayImages">
+
+${imageFiles.map(f=>`
+
+<img src="${URL.createObjectURL(f)}">
+
+`).join("")}
+
+</div>
+
+`;
+
 display.classList.add("show");
 
+display.querySelectorAll("img").forEach(img=>{
+
+img.onclick=()=>{
+
+viewerImg.src=img.src;
+
+viewer.classList.remove("hidden");
+
+};
+
+});
+
 AIWidget.loadQuestion({
+
 id:"Q1",
-text:text
+
+text:text,
+
+images:uploadedImages
+
 });
 
 input.value="";
+
+imageInput.value="";
+
+imageFiles=[];
+
+preview.innerHTML="";
+
 button.disabled=true;
 
-}
+};
 
 </script>
 

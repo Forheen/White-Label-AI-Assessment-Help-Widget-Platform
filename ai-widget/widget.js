@@ -73,7 +73,9 @@ if (colors.length === 1) {
 }
   const state = {
     question: null,
+    images: [],
     mode: null,
+
   theme: config.theme === "dark" ? "dark" : "light",
   aiCache: {} ,
   homeView: "landing",
@@ -188,7 +190,9 @@ background: var(--brand-gradient);
         cursor: pointer;
         font-size: 18px;
       }
-
+.header-icons span:hover{
+opacity:0.7;
+}
       .content {
         flex: 1;
         padding: 18px;
@@ -557,6 +561,8 @@ background: linear-gradient(145deg, #2a3341, #212936);
       <div class="header">
         AI Tutor
         <div class="header-icons">
+
+      <span id="downloadBtn">⬇</span>
           <span id="themeToggle">🌙</span>
           <span id="closeBtn">✕</span>
         </div>
@@ -576,6 +582,7 @@ background: linear-gradient(145deg, #2a3341, #212936);
   const btn = shadow.querySelector(".floating-btn");
   const panel = shadow.querySelector(".panel");
   const closeBtn = shadow.querySelector("#closeBtn");
+  const downloadBtn = shadow.querySelector("#downloadBtn");
   const themeToggle = shadow.querySelector("#themeToggle");
   const questionEl = shadow.querySelector("#question");
   const modesEl = shadow.querySelector("#modes");
@@ -701,7 +708,9 @@ function fetchAIResult(questionText, callback) {
   fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ problem: questionText })
+    body: JSON.stringify({ problem: questionText ,
+
+images: state.images})
   })
   .then(res => res.json())
   .then(data => {
@@ -759,8 +768,10 @@ shadow.querySelector(".back-bar").onclick = () => {
   footer.classList.remove("active");
   renderModes();
 };
-    const questionKey = state.question.text;
-
+const questionKey =
+state.question.text +
+"_" +
+(state.images ? state.images.length : 0);
     // If already cached → render immediately
     if (state.aiCache && state.aiCache[questionKey]) {
 
@@ -794,7 +805,8 @@ shadow.querySelector(".back-bar").onclick = () => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        problem: state.question.text
+        problem: state.question.text,
+        images: state.images
       })
     })
     .then(res => res.json())
@@ -880,7 +892,8 @@ if (!state.chatSessionId && !state.chatStarting) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      problem: state.question.text
+      problem: state.question.text,
+      images: state.images
     })
   })
   .then(res => res.json())
@@ -1266,6 +1279,53 @@ function renderSolutionUI(data) {
     img.onclick = () => openFullscreenImage(img.src);
   }
 }
+downloadBtn.onclick = ()=>{
+
+downloadCurrentView();
+
+};
+
+function downloadCurrentView(){
+
+let element;
+
+if(state.mode==="solution"){
+
+element = responseEl;
+
+}
+
+else if(state.mode==="breakdown"){
+
+element = responseEl;
+
+}
+
+else if(state.mode==="chat"){
+
+element = shadow.querySelector("#chatArea");
+
+}
+
+if(!element) return;
+
+const opt = {
+
+margin:10,
+
+filename:'AI_Tutor_Report.pdf',
+
+image:{ type:'jpeg', quality:0.98 },
+
+html2canvas:{ scale:2 },
+
+jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }
+
+};
+
+html2pdf().set(opt).from(element).save();
+
+}
 function openFullscreenImage(src) {
 
   const overlay = document.createElement("div");
@@ -1305,19 +1365,30 @@ function openFullscreenImage(src) {
     if (e.target === overlay) overlay.remove();
   };
 }
- window.AIWidget = {
-  loadQuestion: function (q) {
+window.AIWidget = {
 
-    state.question = q;
+loadQuestion: function (q) {
 
-    state.chatHistory = [];
-    state.chatSessionId = null;
+state.question = {
 
-    questionEl.innerHTML =
-      `<div class="question-box">${q.text}</div>`;
+text: q.text || "",
 
-    renderModes();
-  }
+images: q.images || []
+
+};
+
+state.images = q.images || [];
+
+state.chatHistory = [];
+
+state.chatSessionId = null;
+
+questionEl.innerHTML =
+`<div class="question-box">${q.text || "Image question uploaded"}</div>`;
+
+renderModes();
+
+}
 };
 
 })();

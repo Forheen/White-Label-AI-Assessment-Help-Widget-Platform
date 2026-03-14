@@ -1278,40 +1278,99 @@ function renderBreakdownUI(data) {
       </div>
     </div>
   `;
-
-
-  // ===============================
-  // STRUCTURED EXPLANATION
-  // ===============================
-  if (structured.final_explanation) {
-
+  if (structured.normal_explanation) {
     html += `
       <div style="
         padding:16px;
         border-radius:14px;
-        background:var(--card);
+        background: var(--card);
         border:1px solid var(--border);
-        margin-bottom:14px;
+        margin-bottom:12px;
       ">
-
-        <div style="
-          font-weight:600;
-          margin-bottom:8px;
-        ">
-          Explanation
-        </div>
-
-        <div style="
-          font-size:14px;
-          line-height:1.65;
-          white-space:pre-line;
-        ">
-          ${structured.final_explanation}
-        </div>
-
+        <strong>Explanation</strong><br/><br/>
+        ${structured.normal_explanation}
       </div>
     `;
   }
+
+  // ===============================
+  // STRUCTURED EXPLANATION
+  // ===============================
+if (structured.reasoning_stages && structured.reasoning_stages.length) {
+
+html += `
+<div style="
+font-weight:700;
+font-size:16px;
+margin-bottom:12px;
+color:var(--brand-solid);
+">
+
+🧭 Reasoning Path
+
+</div>
+`;
+
+structured.reasoning_stages.forEach(stage=>{
+
+html += `
+
+<div style="
+padding:16px;
+border-radius:14px;
+background:var(--card);
+border:1px solid var(--border);
+margin-bottom:12px;
+">
+
+<div style="
+font-weight:600;
+margin-bottom:6px;
+">
+
+Stage ${stage.stage}
+
+</div>
+
+<div style="
+font-size:13px;
+opacity:.7;
+margin-bottom:6px;
+">
+
+Goal:
+${stage.goal}
+
+</div>
+
+<div style="
+font-size:14px;
+margin-bottom:6px;
+">
+
+Concept:
+${stage.concept_focus}
+
+</div>
+
+<div style="
+font-size:14px;
+line-height:1.6;
+white-space:pre-line;
+">
+
+Action:
+${stage.expected_student_action}
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
 
 
   // ===============================

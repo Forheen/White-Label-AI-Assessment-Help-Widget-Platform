@@ -553,11 +553,124 @@ background: linear-gradient(145deg, #2a3341, #212936);
   color: var(--text);
   opacity: 0.45;
 }
+
+.widget-chat{
+
+border-radius:22px;
+
+padding:20px;
+
+margin-bottom:20px;
+
+cursor:pointer;
+
+background:linear-gradient(160deg,#020617,#0f172a);
+
+border:1px solid rgba(34,197,94,0.5);
+
+box-shadow:
+0 0 0 1px rgba(34,197,94,0.2),
+0 12px 30px rgba(0,0,0,0.5);
+
+transition:.3s;
+
+}
+
+.widget-chat:hover{
+
+transform:translateY(-4px);
+
+box-shadow:
+0 0 0 1px rgba(34,197,94,0.4),
+0 20px 40px rgba(0,0,0,0.6);
+
+}
+
+.chat-title{
+
+font-size:20px;
+
+font-weight:600;
+
+color:white;
+
+margin-bottom:8px;
+
+}
+
+.chat-desc{
+
+font-size:14px;
+
+color:rgba(255,255,255,0.85);
+
+margin-bottom:16px;
+
+}
+
+.chat-preview{
+
+display:flex;
+
+gap:8px;
+
+}
+
+.chat-bubble{
+
+width:70px;
+
+height:28px;
+
+background:#22c55e;
+
+border-radius:20px;
+
+opacity:.9;
+
+}
+
+.chat-bubble.small{
+
+width:40px;
+
+background:#16a34a;
+
+opacity:.7;
+
+}
+
+.resize-handle{
+
+position:absolute;
+
+top:0;
+
+left:0;
+
+width:6px;
+
+height:100%;
+
+cursor:ew-resize;
+
+background:transparent;
+
+z-index:10;
+
+}
+
+.resize-handle:hover{
+
+background:rgba(99,102,241,.3);
+
+}
     </style>
 
     <button class="floating-btn">🤖</button>
 
     <div class="panel ${state.theme}">
+    <div class="resize-handle"></div>
       <div class="header">
         AI Tutor
         <div class="header-icons">
@@ -590,7 +703,59 @@ background: linear-gradient(145deg, #2a3341, #212936);
   const footer = shadow.querySelector(".footer");
   const input = shadow.querySelector("input");
   const sendBtn = shadow.querySelector("button:last-child");
+const resizeHandle = shadow.querySelector(".resize-handle");
 
+let isResizing=false;
+
+resizeHandle.addEventListener("mousedown",(e)=>{
+
+isResizing=true;
+
+document.body.style.cursor="ew-resize";
+
+});
+
+document.addEventListener("mousemove",(e)=>{
+
+if(!isResizing) return;
+
+/* RIGHT PANEL */
+
+if(config.position==="right"){
+
+let newWidth=window.innerWidth - e.clientX;
+
+if(newWidth<320) newWidth=320;
+const maxWidth = window.innerWidth * 0.5;
+
+if(newWidth > maxWidth)
+newWidth = maxWidth;
+
+panel.style.width=newWidth+"px";
+
+}
+
+/* LEFT PANEL */
+
+else{
+
+let newWidth=e.clientX;
+
+if(newWidth<320) newWidth=320;
+
+panel.style.width=newWidth+"px";
+
+}
+
+});
+
+document.addEventListener("mouseup",()=>{
+
+isResizing=false;
+
+document.body.style.cursor="default";
+
+});
 btn.onclick = () => {
   panel.classList.add("open");
   btn.classList.add("hidden");
@@ -628,66 +793,127 @@ btn.onclick = () => {
 function renderModes() {
 
   modesEl.innerHTML = `
-    <div class="app-home">
+<div class="app-home">
 
-      <div class="home-top">
-        <div class="home-avatar">🤖</div>
-        <div class="home-heading">
-          Welcome to <br/> AI Chat
-        </div>
-      </div>
 
-      <div class="home-pill" id="homePill">
-        Ask me anything...
-      </div>
+<div class="response-box">
 
-      <div class="widgets-label">WIDGETS</div>
+${state.question?.text || "No questions loaded"}
 
-      <div class="widget-solution" data-mode="solution">
-  <div class="solution-title">1. Solution</div>
-  <div class="solution-desc">
-    This gadget provides you the solution with the explanation and the image.
-  </div>
+</div>
+</br>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
 
-  <div class="solution-preview">
-    <img src="assets/chat-preview.png" class="sol-preview-left" />
-    <img src="assets/image-preview.png" class="sol-preview-right" />
-  </div>
+${state.images?.length ? 
+state.images.map(img=>`
+
+<img 
+src="data:image/png;base64,${img}"
+style="
+width:70px;
+height:70px;
+object-fit:cover;
+border-radius:8px;
+border:1px solid var(--border);
+cursor:pointer;
+"
+/>
+
+`).join("")
+:
+""
+}
+
+</div>
+</br>
+<div class="widgets-label">WIDGETS</div>
+
+<div class="widget-solution" data-mode="solution">
+
+<div class="solution-title">
+Solution
 </div>
 
-      <div class="widget-deconstruction" data-mode="breakdown">
-  <div class="deconstruction-title">2. Deconstruction</div>
-  <div class="deconstruction-desc">
-    Get a guide from Navin to understand how to think like a pro.
-  </div>
-
-  <div class="deconstruction-preview">
-    <img src="assets/deconstruction-left.png" class="dec-preview-left" />
-    <img src="assets/deconstruction-right.png" class="dec-preview-right" />
-  </div>
+<div class="solution-desc">
+This gadget provides you the solution with the explanation and the image.
 </div>
 
-    </div>
-  `;
+<div class="solution-preview">
 
-  // Chat pill click
-  shadow.getElementById("homePill").onclick = () => {
-    state.mode = "chat";
-    modesEl.innerHTML = "";
-    renderResponse();
-  };
+<img src="assets/chat-preview.png" class="sol-preview-left"/>
+
+<img src="assets/image-preview.png" class="sol-preview-right"/>
+
+</div>
+
+</div>
+
+
+
+<div class="widget-deconstruction" data-mode="breakdown">
+
+<div class="deconstruction-title">
+Deconstruction
+</div>
+
+<div class="deconstruction-desc">
+Get a guide from Navin to understand how to think like a pro.
+</div>
+
+<div class="deconstruction-preview">
+
+<img src="assets/deconstruction-left.png" class="dec-preview-left"/>
+
+<img src="assets/deconstruction-right.png" class="dec-preview-right"/>
+
+</div>
+
+</div>
+
+
+
+<div class="widget-chat" data-mode="chat">
+
+<div class="chat-title">
+Chat
+</div>
+
+<div class="chat-desc">
+Chat with the bot which will guide you with hints and explanations until you reach the solution on your own.
+</div>
+
+<div class="chat-preview">
+
+<div class="chat-bubble"></div>
+
+<div class="chat-bubble small"></div>
+
+</div>
+
+</div>
+
+</div>
+`;
+
+
 
   // Card click
 // Card click
 shadow
-  .querySelectorAll(".widget-solution, .widget-deconstruction")
-  .forEach(card => {
-    card.onclick = () => {
-      state.mode = card.dataset.mode;
-      modesEl.innerHTML = "";
-      renderResponse();
-    };
-  });
+.querySelectorAll(".widget-solution, .widget-deconstruction, .widget-chat")
+.forEach(card=>{
+
+card.onclick=()=>{
+
+state.mode=card.dataset.mode;
+
+modesEl.innerHTML="";
+
+renderResponse();
+
+};
+
+});
 }
 function fetchAIResult(questionText, callback) {
 
@@ -737,7 +963,7 @@ function renderResponse() {
   footer.classList.remove("active");
 
   // No question loaded
- if (!state.question && (state.mode === "solution" || state.mode === "breakdown")) {
+ if (!state.question && (state.mode === "solution" || state.mode === "breakdown" || state.mode === "chat")) {
   responseEl.innerHTML = `
     <div class="response-box">
       No question loaded.
@@ -1383,8 +1609,6 @@ state.chatHistory = [];
 
 state.chatSessionId = null;
 
-questionEl.innerHTML =
-`<div class="question-box">${q.text || "Image question uploaded"}</div>`;
 
 renderModes();
 

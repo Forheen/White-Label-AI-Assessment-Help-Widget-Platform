@@ -1271,27 +1271,14 @@ function renderBreakdownUI(data) {
         margin-bottom:4px;
         color:var(--brand-solid);
       ">
-        🧠 Guided Breakdown
+       Guided Breakdown
       </div>
       <div style="font-size:13px;opacity:0.7;">
         Understanding the reasoning behind the solution
       </div>
     </div>
   `;
-  if (structured.normal_explanation) {
-    html += `
-      <div style="
-        padding:16px;
-        border-radius:14px;
-        background: var(--card);
-        border:1px solid var(--border);
-        margin-bottom:12px;
-      ">
-        <strong>Explanation</strong><br/><br/>
-        ${structured.normal_explanation}
-      </div>
-    `;
-  }
+ 
 
   // ===============================
   // STRUCTURED EXPLANATION
@@ -1371,7 +1358,20 @@ ${stage.expected_student_action}
 });
 
 }
-
+ if (structured.normal_explanation) {
+    html += `
+      <div style="
+        padding:16px;
+        border-radius:14px;
+        background: var(--card);
+        border:1px solid var(--border);
+        margin-bottom:12px;
+      ">
+        <strong>Explanation</strong><br/><br/>
+        ${structured.normal_explanation}
+      </div>
+    `;
+  }
 
   // ===============================
   // FINAL ANSWER

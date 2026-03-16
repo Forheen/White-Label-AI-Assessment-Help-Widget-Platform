@@ -368,8 +368,8 @@ background: var(--brand-solid);
 /* ================= SOLUTION CARD PREMIUM ================= */
 
 .widget-solution {
-  border-radius: 22px;
-  padding: 20px;
+  border-radius: 2px;
+  padding: 15px;
   margin-bottom: 20px;
   cursor: pointer;
 
@@ -391,7 +391,7 @@ background: linear-gradient(145deg, #2a3341, #212936);
 }
 
 .solution-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: white;
   margin-bottom: 8px;
@@ -438,8 +438,8 @@ background: linear-gradient(145deg, #2a3341, #212936);
   opacity: 0.9;
 }
 .widget-deconstruction {
-  border-radius: 22px;
-  padding: 20px;
+  border-radius: 2px;
+  padding: 15px;
   margin-bottom: 20px;
   cursor: pointer;
 
@@ -465,7 +465,7 @@ background: linear-gradient(145deg, #2a3341, #212936);
 }
 
 .deconstruction-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: white;
   margin-bottom: 8px;
@@ -556,9 +556,9 @@ background: linear-gradient(145deg, #2a3341, #212936);
 
 .widget-chat{
 
-border-radius:22px;
+border-radius:2px;
 
-padding:20px;
+padding:15px;
 
 margin-bottom:20px;
 
@@ -588,7 +588,7 @@ box-shadow:
 
 .chat-title{
 
-font-size:20px;
+font-size:18px;
 
 font-weight:600;
 
@@ -838,13 +838,7 @@ Solution
 This gadget provides you the solution with the explanation and the image.
 </div>
 
-<div class="solution-preview">
 
-<img src="assets/chat-preview.png" class="sol-preview-left"/>
-
-<img src="assets/image-preview.png" class="sol-preview-right"/>
-
-</div>
 
 </div>
 
@@ -860,13 +854,6 @@ Deconstruction
 Get a guide from Navin to understand how to think like a pro.
 </div>
 
-<div class="deconstruction-preview">
-
-<img src="assets/deconstruction-left.png" class="dec-preview-left"/>
-
-<img src="assets/deconstruction-right.png" class="dec-preview-right"/>
-
-</div>
 
 </div>
 

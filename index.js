@@ -1,4 +1,4 @@
-import AiTutor from "./react-native/AiTutor.tsx";
+import AiTutor from "./react-native/AiTutor.js";
 import TutorEngine from "./core/tutorEngine.js";
 
 export {

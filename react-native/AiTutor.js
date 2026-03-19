@@ -17,19 +17,7 @@ ActivityIndicator
 }
 from "react-native";
 
-import TutorEngine from "../core/tutorEngine";
-
-interface Props{
-
-question:string
-
-images?:string[]
-
-baseUrl?:string
-
-apiKey?:string
-
-}
+import TutorEngine from "../core/tutorEngine.js";
 
 export default function AiTutor({
 
@@ -41,7 +29,7 @@ baseUrl,
 
 apiKey
 
-}:Props){
+}){
 
 const engineRef=
 useRef(
@@ -62,18 +50,16 @@ const [open,setOpen]=
 useState(false);
 
 const [mode,setMode]=
-useState<"home"|"solution"|"chat">(
-"home"
-);
+useState("home");
 
 const [loading,setLoading]=
 useState(false);
 
 const [solution,setSolution]=
-useState<any>(null);
+useState(null);
 
 const [messages,setMessages]=
-useState<any[]>([]);
+useState([]);
 
 const [input,setInput]=
 useState("");
@@ -129,7 +115,6 @@ setMode("chat");
 
 setLoading(true);
 
-const data=
 await engine.startChatSession();
 
 setMessages(

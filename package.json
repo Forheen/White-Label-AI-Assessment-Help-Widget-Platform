@@ -1,21 +1,41 @@
 {
-"name":"ai-widget",
-"version":"1.0.0",
-"main":"index.js",
+  "name": "ai-widget",
+  "version": "1.0.0",
+  "description": "White label AI Tutor widget SDK for React Native and Web",
 
-"exports":{
+  "type": "module",
 
-".":"./index.js",
+  "main": "index.js",
 
-"./react-native":"./react-native/AiTutor.tsx",
+  "files": [
+    "core",
+    "react-native",
+    "index.js"
+  ],
 
-"./core":"./core/TutorEngine.js"
+  "keywords": [
+    "ai",
+    "education",
+    "react-native",
+    "ai-widget",
+    "chatbot",
+    "tutor",
+    "sdk"
+  ],
 
-},
+  "author": "Forheen",
 
-"peerDependencies":{
-"react":"*",
-"react-native":"*"
-}
+  "license": "MIT",
+
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+
+  "exports": {
+    ".": "./index.js",
+    "./core": "./core/tutorEngine.js",
+    "./react-native": "./react-native/AiTutor.tsx"
+  }
 
 }

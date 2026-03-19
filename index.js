@@ -1,3 +1,10 @@
-import initWidget from "./ai-widget/widget.js";
+import AiTutor from "./react-native/AiTutor";
+import TutorEngine from "./core/TutorEngine";
 
-export { initWidget };
+export {
+
+AiTutor,
+
+TutorEngine
+
+};

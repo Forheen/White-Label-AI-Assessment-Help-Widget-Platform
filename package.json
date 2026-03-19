@@ -1,11 +1,21 @@
 {
-  "name": "ai-assessment-help-widget",
-  "version": "1.0.0",
-  "description": "White label AI assessment help widget",
-  "main": "index.js",
-  "type": "module",
-  "files": [
-    "src",
-    "index.js"
-  ]
+"name":"ai-widget",
+"version":"1.0.0",
+"main":"index.js",
+
+"exports":{
+
+".":"./index.js",
+
+"./react-native":"./react-native/AiTutor.tsx",
+
+"./core":"./core/TutorEngine.js"
+
+},
+
+"peerDependencies":{
+"react":"*",
+"react-native":"*"
+}
+
 }

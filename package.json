@@ -1,0 +1,11 @@
+{
+  "name": "ai-assessment-help-widget",
+  "version": "1.0.0",
+  "description": "White label AI assessment help widget",
+  "main": "index.js",
+  "type": "module",
+  "files": [
+    "src",
+    "index.js"
+  ]
+}

@@ -1,19 +1,21 @@
 {
   "name": "ai-widget",
   "version": "1.0.0",
-
+  "description": "AI Tutor Widget for React Native",
   "main": "index.js",
-
-  "react-native": "index.js",
-
   "files": [
-    "core",
-    "react-native",
-    "index.js"
+    "index.js",
+    "core/",
+    "react-native/"
   ],
-
   "peerDependencies": {
-    "react": "*",
-    "react-native": "*"
-  }
+    "react": ">=17.0.0",
+    "react-native": ">=0.64.0"
+  },
+  "keywords": [
+    "ai-tutor",
+    "react-native",
+    "widget"
+  ],
+  "license": "MIT"
 }

@@ -395,9 +395,8 @@ export default function AiTutor({
         showsVerticalScrollIndicator={false}
       >
         {/* Greeting */}
-        <FadeInView delay={0}>
+        {/* <FadeInView delay={0}>
           <View style={{ alignItems: "center", marginTop: 8, marginBottom: 28 }}>
-            {/* AI Avatar */}
             <View
               style={[
                 {
@@ -420,7 +419,7 @@ export default function AiTutor({
               What would you{"\n"}like to explore?
             </Text>
           </View>
-        </FadeInView>
+        </FadeInView> */}
 
         {/* Question card */}
         <FadeInView delay={80}>
@@ -1338,7 +1337,7 @@ export default function AiTutor({
               resizeMode="cover"
             />
           ) : (
-            <Text style={{ fontSize: 26 }}>🤖</Text>
+            <Text style={{ fontSize: 26 }}>🙄</Text>
           )}
         </TouchableOpacity>
       </Animated.View>
@@ -1390,7 +1389,7 @@ export default function AiTutor({
                     justifyContent: "center",
                   }}
                 >
-                  <Text style={{ fontSize: 16 }}>🧠</Text>
+                  <Text style={{ fontSize: 16 }}></Text>
                 </View>
               )}
               <Text style={[TYPE.h2, { color: c.text }]}>

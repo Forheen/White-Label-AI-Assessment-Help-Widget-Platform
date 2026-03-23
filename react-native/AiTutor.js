@@ -257,11 +257,15 @@ export default function AiTutor({
   theme: initialTheme = "dark",
   enableChat = true,
   brandColor,
+  fabImage = null,  // require('./assets/peep.gif') or { uri: '...' }
   onClose,
 }) {
   /* ---- engine ---- */
   const engineRef = useRef(new TutorEngine({ baseUrl, apiKey }));
   const engine = engineRef.current;
+
+  /* ---- track loaded question to avoid resetting session ---- */
+  const loadedQuestionRef = useRef(null);
 
   /* ---- state ---- */
   const [open, setOpen] = useState(false);
@@ -290,17 +294,29 @@ export default function AiTutor({
     return () => pulse.stop();
   }, []);
 
-  /* ---- core logic (unchanged) ---- */
+  /* ---- core logic ---- */
 
-  function loadQuestion() {
+  /**
+   * Only reloads the engine (and wipes session) when
+   * the question/images actually change.
+   * Returns true if it was a fresh load.
+   */
+  function loadQuestionIfNeeded() {
+    const key = question + "_" + (images ? images.length : 0);
+    if (loadedQuestionRef.current === key) {
+      return false; // same question — keep session alive
+    }
     engine.loadQuestion({ text: question, images });
+    loadedQuestionRef.current = key;
+    // Only wipe UI state on a genuinely new question
+    setSolutionData(null);
+    setChatMessages([]);
+    return true;
   }
 
   function openTutor() {
-    loadQuestion();
+    loadQuestionIfNeeded();
     setMode("home");
-    setSolutionData(null);
-    setChatMessages([]);
     setOpen(true);
   }
 
@@ -337,6 +353,13 @@ export default function AiTutor({
 
   async function startChat() {
     setMode("chat");
+
+    // If session already exists, just restore messages from engine
+    if (engine.getSessionId()) {
+      setChatMessages([...engine.getChatHistory()]);
+      return;
+    }
+
     setLoading(true);
     try {
       await engine.startChatSession();
@@ -1300,14 +1323,23 @@ export default function AiTutor({
               width: 60,
               height: 60,
               borderRadius: 22,
-              backgroundColor: c.accent,
+              backgroundColor: fabImage ? "transparent" : c.accent,
               alignItems: "center",
               justifyContent: "center",
+              overflow: "hidden",
             },
-            SHADOW.glow(c.accent),
+            fabImage ? {} : SHADOW.glow(c.accent),
           ]}
         >
-          <Text style={{ fontSize: 26 }}>🤖</Text>
+          {fabImage ? (
+            <Image
+              source={fabImage}
+              style={{ width: 60, height: 60, borderRadius: 22 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={{ fontSize: 26 }}>🤖</Text>
+          )}
         </TouchableOpacity>
       </Animated.View>
 

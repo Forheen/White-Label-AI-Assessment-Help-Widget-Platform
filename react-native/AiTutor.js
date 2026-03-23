@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -14,32 +14,236 @@ import {
   Platform,
   SafeAreaView,
   KeyboardAvoidingView,
+  Animated,
+  Easing,
 } from "react-native";
 
-import TutorEngine from "../core/tutorEngine.js";
+import TutorEngine from "../core/TutorEngine.js";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
 /* =========================================================
-   DEFAULT PROPS / CONFIG
+   DESIGN SYSTEM — 2026 PREMIUM
    ========================================================= */
 
-const THEMES = {
-  light: {
-    bg: "#ffffff",
-    text: "#111827",
-    card: "#f3f4f6",
-    border: "#e5e7eb",
-    subText: "#6b7280",
-  },
+const PALETTE = {
   dark: {
-    bg: "#111827",
-    text: "#f9fafb",
-    card: "#1f2937",
-    border: "#374151",
-    subText: "#9ca3af",
+    bg: "#0B0F1A",
+    surface: "#121829",
+    surfaceElevated: "#1A2138",
+    surfaceGlass: "rgba(26, 33, 56, 0.65)",
+    text: "#F0F2F8",
+    textSecondary: "#8B93A7",
+    textMuted: "#5A6178",
+    border: "rgba(255,255,255,0.06)",
+    borderLight: "rgba(255,255,255,0.03)",
+    accent: "#818CF8",       // Indigo 400
+    accentSoft: "rgba(129,140,248,0.12)",
+    accentGlow: "rgba(129,140,248,0.25)",
+    success: "#34D399",
+    successSoft: "rgba(52,211,153,0.12)",
+    purple: "#A78BFA",
+    purpleSoft: "rgba(167,139,250,0.12)",
+    chatUser: "#818CF8",
+    chatAi: "#1A2138",
+    overlay: "rgba(0,0,0,0.85)",
+  },
+  light: {
+    bg: "#F8F9FC",
+    surface: "#FFFFFF",
+    surfaceElevated: "#FFFFFF",
+    surfaceGlass: "rgba(255,255,255,0.72)",
+    text: "#0F1629",
+    textSecondary: "#64748B",
+    textMuted: "#94A3B8",
+    border: "rgba(0,0,0,0.06)",
+    borderLight: "rgba(0,0,0,0.03)",
+    accent: "#6366F1",
+    accentSoft: "rgba(99,102,241,0.08)",
+    accentGlow: "rgba(99,102,241,0.15)",
+    success: "#10B981",
+    successSoft: "rgba(16,185,129,0.08)",
+    purple: "#8B5CF6",
+    purpleSoft: "rgba(139,92,246,0.08)",
+    chatUser: "#6366F1",
+    chatAi: "#F1F5F9",
+    overlay: "rgba(0,0,0,0.6)",
   },
 };
+
+const TYPE = {
+  hero: { fontSize: 26, fontWeight: "700", letterSpacing: -0.5 },
+  h1: { fontSize: 20, fontWeight: "700", letterSpacing: -0.3 },
+  h2: { fontSize: 17, fontWeight: "600", letterSpacing: -0.2 },
+  h3: { fontSize: 15, fontWeight: "600" },
+  body: { fontSize: 14, fontWeight: "400", lineHeight: 21 },
+  bodySmall: { fontSize: 13, fontWeight: "400", lineHeight: 19 },
+  caption: { fontSize: 11, fontWeight: "600", letterSpacing: 1.2, textTransform: "uppercase" },
+  label: { fontSize: 12, fontWeight: "500" },
+};
+
+const RADIUS = {
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 24,
+  full: 999,
+};
+
+const SHADOW = {
+  card: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  elevated: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  glow: (color) => ({
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 6,
+  }),
+};
+
+/* =========================================================
+   ANIMATED COMPONENTS
+   ========================================================= */
+
+function PulsingDot({ color, delay = 0 }) {
+  const anim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0.3, duration: 400, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  return (
+    <Animated.View
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
+        backgroundColor: color,
+        opacity: anim,
+        marginHorizontal: 2,
+      }}
+    />
+  );
+}
+
+function TypingIndicator({ color }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4 }}>
+      <PulsingDot color={color} delay={0} />
+      <PulsingDot color={color} delay={150} />
+      <PulsingDot color={color} delay={300} />
+    </View>
+  );
+}
+
+function FadeInView({ children, delay = 0, style }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 400,
+        delay,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 400,
+        delay,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={[style, { opacity, transform: [{ translateY }] }]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+/* =========================================================
+   SHIMMER LOADER
+   ========================================================= */
+
+function ShimmerLoader({ c }) {
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(shimmer, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: true,
+        easing: Easing.inOut(Easing.ease),
+      })
+    ).start();
+  }, []);
+
+  const opacity = shimmer.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.3, 0.7, 0.3],
+  });
+
+  return (
+    <View style={{ flex: 1, padding: 24, gap: 16 }}>
+      {/* Title shimmer */}
+      <Animated.View
+        style={{
+          height: 22,
+          width: "55%",
+          borderRadius: RADIUS.sm,
+          backgroundColor: c.surfaceElevated,
+          opacity,
+        }}
+      />
+      {/* Card shimmer */}
+      {[1, 2, 3].map((i) => (
+        <Animated.View
+          key={i}
+          style={{
+            height: 80 + i * 10,
+            borderRadius: RADIUS.md,
+            backgroundColor: c.surfaceElevated,
+            opacity,
+          }}
+        />
+      ))}
+      {/* Status text */}
+      <View style={{ alignItems: "center", marginTop: 12 }}>
+        <Text style={[TYPE.h3, { color: c.accent }]}>Analyzing problem...</Text>
+        <Text style={[TYPE.bodySmall, { color: c.textMuted, marginTop: 4 }]}>
+          Building structured reasoning
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 /* =========================================================
    MAIN COMPONENT
@@ -52,19 +256,17 @@ export default function AiTutor({
   apiKey,
   theme: initialTheme = "dark",
   enableChat = true,
-  brandColor = "#6366f1",
+  brandColor,
   onClose,
 }) {
   /* ---- engine ---- */
-  const engineRef = useRef(
-    new TutorEngine({ baseUrl, apiKey })
-  );
+  const engineRef = useRef(new TutorEngine({ baseUrl, apiKey }));
   const engine = engineRef.current;
 
   /* ---- state ---- */
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState("home"); // home | solution | breakdown | chat
-  const [theme, setTheme] = useState(initialTheme === "dark" ? "dark" : "light");
+  const [mode, setMode] = useState("home");
+  const [theme, setTheme] = useState(initialTheme === "light" ? "light" : "dark");
   const [loading, setLoading] = useState(false);
   const [solutionData, setSolutionData] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -73,9 +275,22 @@ export default function AiTutor({
   const [fullscreenImg, setFullscreenImg] = useState(null);
 
   const scrollRef = useRef(null);
-  const colors = THEMES[theme];
+  const fabScale = useRef(new Animated.Value(1)).current;
+  const c = PALETTE[theme];
 
-  /* ---- helpers ---- */
+  /* ---- FAB pulse ---- */
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(fabScale, { toValue: 1.08, duration: 1200, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+        Animated.timing(fabScale, { toValue: 1, duration: 1200, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
+
+  /* ---- core logic (unchanged) ---- */
 
   function loadQuestion() {
     engine.loadQuestion({ text: question, images });
@@ -104,15 +319,11 @@ export default function AiTutor({
     setTheme((t) => (t === "light" ? "dark" : "light"));
   }
 
-  /* ---- API: solution / breakdown ---- */
-
   async function fetchAI(targetMode) {
     setMode(targetMode);
     setLoading(true);
-
     try {
       const res = await engine.generateSolution();
-
       if (res && res.success === false) {
         setSolutionData({ error: res.error || "AI_SERVER_ERROR" });
       } else {
@@ -121,44 +332,32 @@ export default function AiTutor({
     } catch {
       setSolutionData({ error: "AI_SERVER_ERROR" });
     }
-
     setLoading(false);
   }
-
-  /* ---- API: chat ---- */
 
   async function startChat() {
     setMode("chat");
     setLoading(true);
-
     try {
       await engine.startChatSession();
       setChatMessages([...engine.getChatHistory()]);
     } catch {
       setChatMessages([{ type: "ai", text: "Unable to start AI session." }]);
     }
-
     setLoading(false);
   }
 
   async function sendChatMessage() {
     const msg = chatInput.trim();
     if (!msg) return;
-
     setChatInput("");
     setChatTyping(true);
-
-    // Optimistically show user message
     const optimistic = [...engine.getChatHistory(), { type: "user", text: msg }];
     setChatMessages(optimistic);
-
     await engine.sendMessage(msg);
     setChatMessages([...engine.getChatHistory()]);
     setChatTyping(false);
-
-    setTimeout(() => {
-      scrollRef.current?.scrollToEnd?.({ animated: true });
-    }, 100);
+    setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: true }), 100);
   }
 
   /* =========================================================
@@ -169,72 +368,241 @@ export default function AiTutor({
     return (
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 18, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Question display */}
-        <View style={[s.questionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[s.questionText, { color: colors.text }]}>
-            {question || "No question loaded"}
-          </Text>
-        </View>
+        {/* Greeting */}
+        <FadeInView delay={0}>
+          <View style={{ alignItems: "center", marginTop: 8, marginBottom: 28 }}>
+            {/* AI Avatar */}
+            <View
+              style={[
+                {
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: c.surfaceElevated,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 16,
+                  borderWidth: 2,
+                  borderColor: c.accentGlow,
+                },
+                SHADOW.glow(c.accent),
+              ]}
+            >
+              <Text style={{ fontSize: 28 }}>🧠</Text>
+            </View>
+            <Text style={[TYPE.hero, { color: c.text, textAlign: "center" }]}>
+              What would you{"\n"}like to explore?
+            </Text>
+          </View>
+        </FadeInView>
+
+        {/* Question card */}
+        <FadeInView delay={80}>
+          <View
+            style={[
+              {
+                backgroundColor: c.surfaceElevated,
+                borderRadius: RADIUS.lg,
+                padding: 16,
+                marginBottom: 12,
+                borderWidth: 1,
+                borderColor: c.border,
+              },
+              SHADOW.card,
+            ]}
+          >
+            <Text style={[TYPE.caption, { color: c.textMuted, marginBottom: 8 }]}>
+              YOUR QUESTION
+            </Text>
+            <Text style={[TYPE.body, { color: c.text }]}>
+              {question || "No question loaded"}
+            </Text>
+          </View>
+        </FadeInView>
 
         {/* Image thumbnails */}
         {images && images.length > 0 && (
-          <View style={s.imageRow}>
-            {images.map((img, i) => (
-              <TouchableOpacity key={i} onPress={() => setFullscreenImg(img)}>
-                <Image
-                  source={{ uri: `data:image/png;base64,${img}` }}
-                  style={[s.thumb, { borderColor: colors.border }]}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
+          <FadeInView delay={120}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: 16 }}
+              contentContainerStyle={{ gap: 10 }}
+            >
+              {images.map((img, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => setFullscreenImg(`data:image/png;base64,${img}`)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{ uri: `data:image/png;base64,${img}` }}
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: RADIUS.sm,
+                      borderWidth: 1,
+                      borderColor: c.border,
+                    }}
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </FadeInView>
         )}
 
         {/* Section label */}
-        <Text style={[s.widgetLabel, { color: colors.subText }]}>WIDGETS</Text>
-
-        {/* Solution card */}
-        <TouchableOpacity
-          style={s.cardSolution}
-          activeOpacity={0.85}
-          onPress={() => fetchAI("solution")}
-        >
-          <Text style={s.cardTitle}>Solution</Text>
-          <Text style={s.cardDesc}>
-            Get the complete solution with explanation and visual aid.
+        <FadeInView delay={160}>
+          <Text style={[TYPE.caption, { color: c.textMuted, marginBottom: 14, marginTop: 8 }]}>
+            CHOOSE A MODE
           </Text>
-        </TouchableOpacity>
+        </FadeInView>
 
-        {/* Breakdown card */}
-        <TouchableOpacity
-          style={s.cardBreakdown}
-          activeOpacity={0.85}
-          onPress={() => fetchAI("breakdown")}
-        >
-          <Text style={s.cardTitle}>Deconstruction</Text>
-          <Text style={s.cardDesc}>
-            Guided reasoning — understand how to think like a pro.
-          </Text>
-        </TouchableOpacity>
-
-        {/* Chat card */}
-        {enableChat && (
+        {/* ---- SOLUTION CARD ---- */}
+        <FadeInView delay={200}>
           <TouchableOpacity
-            style={s.cardChat}
-            activeOpacity={0.85}
-            onPress={startChat}
+            activeOpacity={0.88}
+            onPress={() => fetchAI("solution")}
+            style={[
+              {
+                borderRadius: RADIUS.lg,
+                padding: 20,
+                marginBottom: 14,
+                backgroundColor: c.accentSoft,
+                borderWidth: 1,
+                borderColor: c.accentGlow,
+              },
+              SHADOW.card,
+            ]}
           >
-            <Text style={s.cardTitle}>Chat</Text>
-            <Text style={s.cardDesc}>
-              Get hints and guidance until you reach the solution on your own.
-            </Text>
-            <View style={s.chatBubbleRow}>
-              <View style={[s.chatBubble, { width: 70 }]} />
-              <View style={[s.chatBubble, s.chatBubbleSmall]} />
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  backgroundColor: c.accent,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Text style={{ fontSize: 16, color: "#fff" }}>✦</Text>
+              </View>
+              <Text style={[TYPE.h2, { color: c.text, flex: 1 }]}>Solution</Text>
+              <Text style={{ color: c.textMuted, fontSize: 18 }}>→</Text>
             </View>
+            <Text style={[TYPE.bodySmall, { color: c.textSecondary }]}>
+              Complete answer with step-by-step explanation and visual breakdown.
+            </Text>
           </TouchableOpacity>
+        </FadeInView>
+
+        {/* ---- DECONSTRUCTION CARD ---- */}
+        <FadeInView delay={280}>
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => fetchAI("breakdown")}
+            style={[
+              {
+                borderRadius: RADIUS.lg,
+                padding: 20,
+                marginBottom: 14,
+                backgroundColor: c.purpleSoft,
+                borderWidth: 1,
+                borderColor: "rgba(167,139,250,0.18)",
+              },
+              SHADOW.card,
+            ]}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  backgroundColor: c.purple,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Text style={{ fontSize: 16, color: "#fff" }}>🧭</Text>
+              </View>
+              <Text style={[TYPE.h2, { color: c.text, flex: 1 }]}>Deconstruction</Text>
+              <Text style={{ color: c.textMuted, fontSize: 18 }}>→</Text>
+            </View>
+            <Text style={[TYPE.bodySmall, { color: c.textSecondary }]}>
+              Guided reasoning path — learn how to think through each stage like a pro.
+            </Text>
+          </TouchableOpacity>
+        </FadeInView>
+
+        {/* ---- CHAT CARD ---- */}
+        {enableChat && (
+          <FadeInView delay={360}>
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={startChat}
+              style={[
+                {
+                  borderRadius: RADIUS.lg,
+                  padding: 20,
+                  marginBottom: 14,
+                  backgroundColor: c.successSoft,
+                  borderWidth: 1,
+                  borderColor: "rgba(52,211,153,0.18)",
+                },
+                SHADOW.card,
+              ]}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 12,
+                    backgroundColor: c.success,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                >
+                  <Text style={{ fontSize: 16, color: "#fff" }}>💬</Text>
+                </View>
+                <Text style={[TYPE.h2, { color: c.text, flex: 1 }]}>Chat</Text>
+                <Text style={{ color: c.textMuted, fontSize: 18 }}>→</Text>
+              </View>
+              <Text style={[TYPE.bodySmall, { color: c.textSecondary }]}>
+                Interactive conversation — get hints and guidance until you reach the answer yourself.
+              </Text>
+
+              {/* Chat bubbles preview */}
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
+                <View
+                  style={{
+                    height: 24,
+                    width: 60,
+                    borderRadius: 12,
+                    backgroundColor: c.success,
+                    opacity: 0.4,
+                  }}
+                />
+                <View
+                  style={{
+                    height: 24,
+                    width: 36,
+                    borderRadius: 12,
+                    backgroundColor: c.success,
+                    opacity: 0.25,
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
+          </FadeInView>
         )}
       </ScrollView>
     );
@@ -245,16 +613,29 @@ export default function AiTutor({
      ========================================================= */
 
   function renderSolution() {
-    if (loading) return <Loader colors={colors} />;
+    if (loading) return <ShimmerLoader c={c} />;
 
     if (!solutionData || solutionData.error) {
       return (
-        <View style={{ padding: 20 }}>
-          <Text style={{ color: colors.text }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={[TYPE.h3, { color: c.text, textAlign: "center" }]}>
             {solutionData?.error === "AI_SERVER_ERROR"
-              ? "Error connecting to AI server."
-              : "Failed to generate AI response."}
+              ? "Couldn't reach the AI server"
+              : "Failed to generate a response"}
           </Text>
+          <TouchableOpacity
+            onPress={() => fetchAI("solution")}
+            style={{
+              marginTop: 16,
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: RADIUS.full,
+              backgroundColor: c.accentSoft,
+            }}
+          >
+            <Text style={[TYPE.label, { color: c.accent }]}>Try again</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -263,40 +644,106 @@ export default function AiTutor({
     const img = solutionData.image;
 
     return (
-      <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 40 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <Text style={[s.sectionHeader, { color: brandColor }]}>
-          Complete Solution
-        </Text>
+        <FadeInView delay={0}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                backgroundColor: c.accent,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 14 }}>✦</Text>
+            </View>
+            <Text style={[TYPE.h1, { color: c.text }]}>Complete Solution</Text>
+          </View>
+        </FadeInView>
 
         {/* Final answer */}
         {sd.final_answer ? (
-          <View style={[s.answerBox, { borderColor: brandColor }]}>
-            <Text style={[s.answerLabel, { color: colors.text }]}>Final Answer:</Text>
-            <Text style={[s.answerText, { color: colors.text }]}>{sd.final_answer}</Text>
-          </View>
+          <FadeInView delay={80}>
+            <View
+              style={[
+                {
+                  padding: 18,
+                  borderRadius: RADIUS.lg,
+                  backgroundColor: c.accentSoft,
+                  borderWidth: 1,
+                  borderColor: c.accentGlow,
+                  marginBottom: 16,
+                },
+              ]}
+            >
+              <Text style={[TYPE.caption, { color: c.accent, marginBottom: 8 }]}>
+                FINAL ANSWER
+              </Text>
+              <Text style={[TYPE.h2, { color: c.text }]}>{sd.final_answer}</Text>
+            </View>
+          </FadeInView>
         ) : null}
 
         {/* Explanation */}
         {sd.normal_explanation ? (
-          <View style={[s.infoBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[s.infoLabel, { color: colors.text }]}>Explanation</Text>
-            <Text style={[s.infoBody, { color: colors.text }]}>{sd.normal_explanation}</Text>
-          </View>
+          <FadeInView delay={160}>
+            <View
+              style={[
+                {
+                  padding: 18,
+                  borderRadius: RADIUS.lg,
+                  backgroundColor: c.surfaceElevated,
+                  borderWidth: 1,
+                  borderColor: c.border,
+                  marginBottom: 16,
+                },
+                SHADOW.card,
+              ]}
+            >
+              <Text style={[TYPE.h3, { color: c.text, marginBottom: 10 }]}>Explanation</Text>
+              <Text style={[TYPE.body, { color: c.textSecondary }]}>
+                {sd.normal_explanation}
+              </Text>
+            </View>
+          </FadeInView>
         ) : null}
 
         {/* Image */}
         {img && img.image_base64 ? (
-          <TouchableOpacity
-            style={s.solutionImageWrap}
-            onPress={() => setFullscreenImg(`${img.mime_type};base64,${img.image_base64}`)}
-          >
-            <Image
-              source={{ uri: `data:${img.mime_type};base64,${img.image_base64}` }}
-              style={s.solutionImage}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          <FadeInView delay={240}>
+            <TouchableOpacity
+              onPress={() =>
+                setFullscreenImg(`data:${img.mime_type};base64,${img.image_base64}`)
+              }
+              activeOpacity={0.9}
+              style={{ marginTop: 4 }}
+            >
+              <Image
+                source={{ uri: `data:${img.mime_type};base64,${img.image_base64}` }}
+                style={{
+                  width: "100%",
+                  height: 220,
+                  borderRadius: RADIUS.lg,
+                }}
+                resizeMode="contain"
+              />
+              <Text
+                style={[
+                  TYPE.label,
+                  { color: c.textMuted, textAlign: "center", marginTop: 8 },
+                ]}
+              >
+                Tap to expand
+              </Text>
+            </TouchableOpacity>
+          </FadeInView>
         ) : null}
       </ScrollView>
     );
@@ -307,16 +754,29 @@ export default function AiTutor({
      ========================================================= */
 
   function renderBreakdown() {
-    if (loading) return <Loader colors={colors} />;
+    if (loading) return <ShimmerLoader c={c} />;
 
     if (!solutionData || solutionData.error) {
       return (
-        <View style={{ padding: 20 }}>
-          <Text style={{ color: colors.text }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={[TYPE.h3, { color: c.text, textAlign: "center" }]}>
             {solutionData?.error === "AI_SERVER_ERROR"
-              ? "Error connecting to AI server."
-              : "Failed to generate AI response."}
+              ? "Couldn't reach the AI server"
+              : "Failed to generate a response"}
           </Text>
+          <TouchableOpacity
+            onPress={() => fetchAI("breakdown")}
+            style={{
+              marginTop: 16,
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: RADIUS.full,
+              backgroundColor: c.purpleSoft,
+            }}
+          >
+            <Text style={[TYPE.label, { color: c.purple }]}>Try again</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -325,100 +785,227 @@ export default function AiTutor({
     const img = solutionData.image;
 
     return (
-      <ScrollView contentContainerStyle={{ padding: 18, paddingBottom: 40 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <Text style={[s.sectionHeader, { color: brandColor }]}>
-          Guided Breakdown
-        </Text>
-        <Text style={[s.sectionSub, { color: colors.subText }]}>
-          Understanding the reasoning behind the solution
-        </Text>
+        <FadeInView delay={0}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                backgroundColor: c.purple,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 14 }}>🧭</Text>
+            </View>
+            <Text style={[TYPE.h1, { color: c.text }]}>Guided Breakdown</Text>
+          </View>
+          <Text style={[TYPE.bodySmall, { color: c.textMuted, marginBottom: 22, marginLeft: 42 }]}>
+            Understanding the reasoning behind the solution
+          </Text>
+        </FadeInView>
 
         {/* Reasoning stages */}
         {sd.reasoning_stages && sd.reasoning_stages.length > 0 && (
           <>
-            <Text style={[s.stageHeader, { color: brandColor }]}>
-              🧭 Reasoning Path
-            </Text>
+            <FadeInView delay={60}>
+              <Text style={[TYPE.caption, { color: c.purple, marginBottom: 14 }]}>
+                REASONING PATH
+              </Text>
+            </FadeInView>
 
             {sd.reasoning_stages.map((stage, i) => (
-              <View
-                key={i}
-                style={[s.stageCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              >
-                <Text style={[s.stageTitle, { color: colors.text }]}>
-                  Stage {stage.stage}
-                </Text>
+              <FadeInView key={i} delay={120 + i * 80}>
+                <View
+                  style={[
+                    {
+                      padding: 18,
+                      borderRadius: RADIUS.lg,
+                      backgroundColor: c.surfaceElevated,
+                      borderWidth: 1,
+                      borderColor: c.border,
+                      marginBottom: 12,
+                      borderLeftWidth: 3,
+                      borderLeftColor: c.purple,
+                    },
+                    SHADOW.card,
+                  ]}
+                >
+                  {/* Stage number pill */}
+                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                    <View
+                      style={{
+                        paddingHorizontal: 10,
+                        paddingVertical: 3,
+                        borderRadius: RADIUS.full,
+                        backgroundColor: c.purpleSoft,
+                        marginRight: 10,
+                      }}
+                    >
+                      <Text style={[TYPE.label, { color: c.purple }]}>
+                        Stage {stage.stage}
+                      </Text>
+                    </View>
+                  </View>
 
-                {stage.goal ? (
-                  <Text style={[s.stageMeta, { color: colors.subText }]}>
-                    Goal: {stage.goal}
-                  </Text>
-                ) : null}
+                  {stage.goal ? (
+                    <View style={{ marginBottom: 8 }}>
+                      <Text style={[TYPE.label, { color: c.textMuted, marginBottom: 2 }]}>
+                        Goal
+                      </Text>
+                      <Text style={[TYPE.bodySmall, { color: c.textSecondary }]}>
+                        {stage.goal}
+                      </Text>
+                    </View>
+                  ) : null}
 
-                {stage.concept_focus ? (
-                  <Text style={[s.stageBody, { color: colors.text }]}>
-                    Concept: {stage.concept_focus}
-                  </Text>
-                ) : null}
+                  {stage.concept_focus ? (
+                    <View style={{ marginBottom: 8 }}>
+                      <Text style={[TYPE.label, { color: c.textMuted, marginBottom: 2 }]}>
+                        Concept
+                      </Text>
+                      <Text style={[TYPE.body, { color: c.text }]}>
+                        {stage.concept_focus}
+                      </Text>
+                    </View>
+                  ) : null}
 
-                {stage.expected_student_action ? (
-                  <Text style={[s.stageBody, { color: colors.text }]}>
-                    Action: {stage.expected_student_action}
-                  </Text>
-                ) : null}
-              </View>
+                  {stage.expected_student_action ? (
+                    <View>
+                      <Text style={[TYPE.label, { color: c.textMuted, marginBottom: 2 }]}>
+                        Action
+                      </Text>
+                      <Text style={[TYPE.body, { color: c.text }]}>
+                        {stage.expected_student_action}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </FadeInView>
             ))}
           </>
         )}
 
         {/* Explanation */}
         {sd.normal_explanation ? (
-          <View style={[s.infoBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[s.infoLabel, { color: colors.text }]}>Explanation</Text>
-            <Text style={[s.infoBody, { color: colors.text }]}>{sd.normal_explanation}</Text>
-          </View>
+          <FadeInView delay={120 + (sd.reasoning_stages?.length || 0) * 80}>
+            <View
+              style={[
+                {
+                  padding: 18,
+                  borderRadius: RADIUS.lg,
+                  backgroundColor: c.surfaceElevated,
+                  borderWidth: 1,
+                  borderColor: c.border,
+                  marginBottom: 16,
+                },
+                SHADOW.card,
+              ]}
+            >
+              <Text style={[TYPE.h3, { color: c.text, marginBottom: 10 }]}>Explanation</Text>
+              <Text style={[TYPE.body, { color: c.textSecondary }]}>
+                {sd.normal_explanation}
+              </Text>
+            </View>
+          </FadeInView>
         ) : null}
 
         {/* Final answer */}
         {sd.final_answer ? (
-          <View style={[s.answerBox, { borderColor: brandColor }]}>
-            <Text style={[s.answerLabel, { color: colors.text }]}>🎯 Final Answer</Text>
-            <Text style={[s.answerText, { color: colors.text }]}>{sd.final_answer}</Text>
-          </View>
+          <FadeInView delay={200 + (sd.reasoning_stages?.length || 0) * 80}>
+            <View
+              style={{
+                padding: 18,
+                borderRadius: RADIUS.lg,
+                backgroundColor: c.accentSoft,
+                borderWidth: 1,
+                borderColor: c.accentGlow,
+                marginBottom: 16,
+              }}
+            >
+              <Text style={[TYPE.caption, { color: c.accent, marginBottom: 8 }]}>
+                🎯 FINAL ANSWER
+              </Text>
+              <Text style={[TYPE.h2, { color: c.text }]}>{sd.final_answer}</Text>
+            </View>
+          </FadeInView>
         ) : null}
 
         {/* Key insights */}
         {sd.key_reasoning_lessons && sd.key_reasoning_lessons.length > 0 && (
           <>
-            <Text style={[s.insightLabel, { color: colors.subText }]}>
+            <Text style={[TYPE.caption, { color: c.textMuted, marginBottom: 12, marginTop: 4 }]}>
               KEY INSIGHTS
             </Text>
 
             {sd.key_reasoning_lessons.map((lesson, i) => (
-              <View
-                key={i}
-                style={[s.insightCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              >
-                <Text style={{ fontSize: 16, marginRight: 8 }}>💡</Text>
-                <Text style={[s.insightText, { color: colors.text }]}>{lesson}</Text>
-              </View>
+              <FadeInView key={i} delay={280 + i * 60}>
+                <View
+                  style={[
+                    {
+                      flexDirection: "row",
+                      alignItems: "flex-start",
+                      padding: 14,
+                      borderRadius: RADIUS.md,
+                      backgroundColor: c.surfaceElevated,
+                      borderWidth: 1,
+                      borderColor: c.border,
+                      marginBottom: 10,
+                    },
+                  ]}
+                >
+                  <View
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: "rgba(250,204,21,0.12)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 12,
+                      marginTop: 1,
+                    }}
+                  >
+                    <Text style={{ fontSize: 13 }}>💡</Text>
+                  </View>
+                  <Text style={[TYPE.bodySmall, { color: c.textSecondary, flex: 1 }]}>
+                    {lesson}
+                  </Text>
+                </View>
+              </FadeInView>
             ))}
           </>
         )}
 
         {/* Image */}
         {img && img.image_base64 ? (
-          <TouchableOpacity
-            style={s.solutionImageWrap}
-            onPress={() => setFullscreenImg(`${img.mime_type};base64,${img.image_base64}`)}
-          >
-            <Image
-              source={{ uri: `data:${img.mime_type};base64,${img.image_base64}` }}
-              style={s.solutionImage}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          <FadeInView delay={340}>
+            <TouchableOpacity
+              onPress={() =>
+                setFullscreenImg(`data:${img.mime_type};base64,${img.image_base64}`)
+              }
+              activeOpacity={0.9}
+              style={{ marginTop: 8 }}
+            >
+              <Image
+                source={{ uri: `data:${img.mime_type};base64,${img.image_base64}` }}
+                style={{ width: "100%", height: 220, borderRadius: RADIUS.lg }}
+                resizeMode="contain"
+              />
+              <Text
+                style={[TYPE.label, { color: c.textMuted, textAlign: "center", marginTop: 8 }]}
+              >
+                Tap to expand
+              </Text>
+            </TouchableOpacity>
+          </FadeInView>
         ) : null}
       </ScrollView>
     );
@@ -435,19 +1022,42 @@ export default function AiTutor({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
-        {/* Mini nav */}
-        <View style={s.miniNav}>
+        {/* Pill switcher */}
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 8,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: c.border,
+          }}
+        >
           <TouchableOpacity
-            style={[s.miniBtn, { backgroundColor: brandColor }]}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 7,
+              borderRadius: RADIUS.full,
+              backgroundColor: c.accentSoft,
+              borderWidth: 1,
+              borderColor: c.accentGlow,
+            }}
             onPress={() => fetchAI("solution")}
           >
-            <Text style={s.miniBtnText}>Go to solution</Text>
+            <Text style={[TYPE.label, { color: c.accent }]}>✦ Solution</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[s.miniBtn, { backgroundColor: brandColor }]}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 7,
+              borderRadius: RADIUS.full,
+              backgroundColor: c.purpleSoft,
+              borderWidth: 1,
+              borderColor: "rgba(167,139,250,0.15)",
+            }}
             onPress={() => fetchAI("breakdown")}
           >
-            <Text style={s.miniBtnText}>Guided breakdown</Text>
+            <Text style={[TYPE.label, { color: c.purple }]}>🧭 Breakdown</Text>
           </TouchableOpacity>
         </View>
 
@@ -455,61 +1065,162 @@ export default function AiTutor({
         <ScrollView
           ref={scrollRef}
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 14, paddingBottom: 10 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
+          showsVerticalScrollIndicator={false}
           onContentSizeChange={() =>
             scrollRef.current?.scrollToEnd?.({ animated: true })
           }
         >
           {chatMessages.map((m, i) => (
-            <View
-              key={i}
-              style={[
-                s.chatMsg,
-                m.type === "user"
-                  ? [s.chatUser, { backgroundColor: brandColor }]
-                  : [s.chatAi, { backgroundColor: colors.card, borderColor: colors.border }],
-              ]}
-            >
-              <Text style={{ color: m.type === "user" ? "#fff" : colors.text, fontSize: 14 }}>
-                {m.text}
-              </Text>
-            </View>
+            <FadeInView key={i} delay={0} style={{ marginBottom: 10 }}>
+              {m.type === "ai" && (
+                <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, maxWidth: "85%" }}>
+                  {/* AI avatar */}
+                  <View
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 10,
+                      backgroundColor: c.surfaceElevated,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1,
+                      borderColor: c.border,
+                      marginBottom: 2,
+                    }}
+                  >
+                    <Text style={{ fontSize: 13 }}>🧠</Text>
+                  </View>
+                  <View
+                    style={{
+                      padding: 12,
+                      paddingHorizontal: 16,
+                      borderRadius: RADIUS.lg,
+                      borderTopLeftRadius: RADIUS.xs,
+                      backgroundColor: c.chatAi,
+                      borderWidth: 1,
+                      borderColor: c.border,
+                      flex: 1,
+                    }}
+                  >
+                    <Text style={[TYPE.body, { color: c.text }]}>{m.text}</Text>
+                  </View>
+                </View>
+              )}
+              {m.type === "user" && (
+                <View style={{ alignItems: "flex-end" }}>
+                  <View
+                    style={{
+                      padding: 12,
+                      paddingHorizontal: 16,
+                      borderRadius: RADIUS.lg,
+                      borderTopRightRadius: RADIUS.xs,
+                      backgroundColor: c.chatUser,
+                      maxWidth: "80%",
+                    }}
+                  >
+                    <Text style={[TYPE.body, { color: "#fff" }]}>{m.text}</Text>
+                  </View>
+                </View>
+              )}
+            </FadeInView>
           ))}
 
+          {/* Typing indicator */}
           {chatTyping && (
-            <View style={[s.chatMsg, s.chatAi, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={{ color: colors.subText, fontSize: 13 }}>typing...</Text>
+            <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginTop: 4 }}>
+              <View
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 10,
+                  backgroundColor: c.surfaceElevated,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: c.border,
+                }}
+              >
+                <Text style={{ fontSize: 13 }}>🧠</Text>
+              </View>
+              <View
+                style={{
+                  padding: 14,
+                  borderRadius: RADIUS.lg,
+                  borderTopLeftRadius: RADIUS.xs,
+                  backgroundColor: c.chatAi,
+                  borderWidth: 1,
+                  borderColor: c.border,
+                }}
+              >
+                <TypingIndicator color={c.textMuted} />
+              </View>
             </View>
           )}
 
+          {/* Initial loading */}
           {loading && chatMessages.length === 0 && (
-            <ActivityIndicator color={brandColor} style={{ marginTop: 20 }} />
+            <View style={{ alignItems: "center", marginTop: 40 }}>
+              <ActivityIndicator color={c.accent} />
+              <Text style={[TYPE.bodySmall, { color: c.textMuted, marginTop: 10 }]}>
+                Starting session...
+              </Text>
+            </View>
           )}
         </ScrollView>
 
-        {/* Input */}
-        <View style={[s.chatFooter, { borderColor: colors.border }]}>
-          <TextInput
-            value={chatInput}
-            onChangeText={setChatInput}
-            placeholder="Ask your doubt..."
-            placeholderTextColor={colors.subText}
-            style={[
-              s.chatInput,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-            onSubmitEditing={sendChatMessage}
-            returnKeyType="send"
-          />
-          <TouchableOpacity
-            style={[s.chatSendBtn, { backgroundColor: brandColor }]}
-            onPress={sendChatMessage}
+        {/* Input bar */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            borderTopWidth: 1,
+            borderTopColor: c.border,
+            gap: 10,
+            backgroundColor: c.bg,
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: c.surfaceElevated,
+              borderRadius: RADIUS.xl,
+              borderWidth: 1,
+              borderColor: c.border,
+              paddingHorizontal: 16,
+              paddingVertical: Platform.OS === "ios" ? 10 : 0,
+            }}
           >
-            <Text style={{ color: "#fff", fontWeight: "600" }}>➤</Text>
+            <TextInput
+              value={chatInput}
+              onChangeText={setChatInput}
+              placeholder="Ask your doubt..."
+              placeholderTextColor={c.textMuted}
+              style={[TYPE.body, { color: c.text, flex: 1 }]}
+              onSubmitEditing={sendChatMessage}
+              returnKeyType="send"
+            />
+          </View>
+          <TouchableOpacity
+            onPress={sendChatMessage}
+            activeOpacity={0.8}
+            style={[
+              {
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: c.accent,
+                alignItems: "center",
+                justifyContent: "center",
+              },
+              chatInput.trim() ? SHADOW.glow(c.accent) : {},
+            ]}
+          >
+            <Text style={{ color: "#fff", fontSize: 18 }}>↑</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -517,26 +1228,48 @@ export default function AiTutor({
   }
 
   /* =========================================================
-     RENDER: FULLSCREEN IMAGE MODAL
+     FULLSCREEN IMAGE
      ========================================================= */
 
   function renderFullscreenImage() {
     if (!fullscreenImg) return null;
 
-    // Support both raw base64 and full data URI
-    const uri = fullscreenImg.startsWith("data:")
-      ? fullscreenImg
-      : `data:${fullscreenImg}`;
+    const uri = fullscreenImg.startsWith("data:") ? fullscreenImg : `data:${fullscreenImg}`;
 
     return (
       <Modal visible transparent animationType="fade">
-        <View style={s.fullscreenOverlay}>
-          <TouchableOpacity style={s.fullscreenClose} onPress={() => setFullscreenImg(null)}>
-            <Text style={{ color: "#fff", fontSize: 22 }}>✕</Text>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: c.overlay,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <TouchableOpacity
+            style={{ position: "absolute", top: 54, right: 20, zIndex: 10, padding: 8 }}
+            onPress={() => setFullscreenImg(null)}
+          >
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: "rgba(255,255,255,0.12)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 18 }}>✕</Text>
+            </View>
           </TouchableOpacity>
           <Image
             source={{ uri }}
-            style={s.fullscreenImage}
+            style={{
+              width: SCREEN_W * 0.92,
+              height: SCREEN_H * 0.65,
+              borderRadius: RADIUS.lg,
+            }}
             resizeMode="contain"
           />
         </View>
@@ -550,43 +1283,129 @@ export default function AiTutor({
 
   return (
     <>
-      {/* Floating button */}
-      <TouchableOpacity
-        style={[s.floating, { backgroundColor: brandColor }]}
-        onPress={openTutor}
-        activeOpacity={0.85}
+      {/* ---- FAB ---- */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          bottom: 30,
+          right: 20,
+          transform: [{ scale: fabScale }],
+        }}
       >
-        <Text style={{ fontSize: 26 }}>🤖</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={openTutor}
+          activeOpacity={0.85}
+          style={[
+            {
+              width: 60,
+              height: 60,
+              borderRadius: 22,
+              backgroundColor: c.accent,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+            SHADOW.glow(c.accent),
+          ]}
+        >
+          <Text style={{ fontSize: 26 }}>🤖</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
-      {/* Panel modal */}
+      {/* ---- PANEL ---- */}
       <Modal visible={open} animationType="slide" onRequestClose={closeTutor}>
-        <SafeAreaView style={[s.panel, { backgroundColor: colors.bg }]}>
-          <StatusBar
-            barStyle={theme === "dark" ? "light-content" : "dark-content"}
-          />
+        <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
+          <StatusBar barStyle={theme === "dark" ? "light-content" : "dark-content"} />
 
           {/* Header */}
-          <View style={[s.header, { backgroundColor: brandColor }]}>
-            <Text style={s.headerTitle}>AI Tutor</Text>
-            <View style={s.headerIcons}>
-              <TouchableOpacity onPress={toggleTheme} style={s.headerBtn}>
-                <Text style={{ fontSize: 18 }}>
-                  {theme === "light" ? "🌙" : "☀️"}
-                </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 18,
+              paddingVertical: 14,
+              borderBottomWidth: 1,
+              borderBottomColor: c.border,
+              backgroundColor: c.bg,
+            }}
+          >
+            {/* Left: Back or brand */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              {mode !== "home" ? (
+                <TouchableOpacity
+                  onPress={goHome}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 11,
+                    backgroundColor: c.surfaceElevated,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: c.border,
+                  }}
+                >
+                  <Text style={{ color: c.text, fontSize: 16 }}>←</Text>
+                </TouchableOpacity>
+              ) : (
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 11,
+                    backgroundColor: c.accentSoft,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 16 }}>🧠</Text>
+                </View>
+              )}
+              <Text style={[TYPE.h2, { color: c.text }]}>
+                {mode === "home"
+                  ? "AI Tutor"
+                  : mode === "solution"
+                  ? "Solution"
+                  : mode === "breakdown"
+                  ? "Breakdown"
+                  : "Chat"}
+              </Text>
+            </View>
+
+            {/* Right: actions */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <TouchableOpacity
+                onPress={toggleTheme}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 11,
+                  backgroundColor: c.surfaceElevated,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: c.border,
+                }}
+              >
+                <Text style={{ fontSize: 15 }}>{theme === "light" ? "🌙" : "☀️"}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={closeTutor} style={s.headerBtn}>
-                <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700" }}>✕</Text>
+              <TouchableOpacity
+                onPress={closeTutor}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 11,
+                  backgroundColor: c.surfaceElevated,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: c.border,
+                }}
+              >
+                <Text style={{ color: c.text, fontSize: 15, fontWeight: "600" }}>✕</Text>
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Back bar (non-home) */}
-          {mode !== "home" && (
-            <TouchableOpacity style={[s.backBar, { borderColor: colors.border }]} onPress={goHome}>
-              <Text style={{ color: colors.text, fontSize: 14 }}>← Back</Text>
-            </TouchableOpacity>
-          )}
 
           {/* Content */}
           <View style={{ flex: 1 }}>
@@ -598,350 +1417,7 @@ export default function AiTutor({
         </SafeAreaView>
       </Modal>
 
-      {/* Fullscreen image */}
       {renderFullscreenImage()}
     </>
   );
 }
-
-/* =========================================================
-   LOADER COMPONENT
-   ========================================================= */
-
-function Loader({ colors }) {
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 40 }}>
-      <ActivityIndicator size="large" color="#6366f1" />
-      <Text style={{ color: colors.text, fontWeight: "600", marginTop: 14, fontSize: 15 }}>
-        🧠 Processing...
-      </Text>
-      <Text style={{ color: colors.subText, fontSize: 13, marginTop: 4 }}>
-        Generating structured intelligence
-      </Text>
-    </View>
-  );
-}
-
-/* =========================================================
-   STYLES
-   ========================================================= */
-
-const s = StyleSheet.create({
-
-  /* Floating button */
-  floating: {
-    position: "absolute",
-    bottom: 30,
-    right: 20,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-    shadowColor: "#6366f1",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-  },
-
-  /* Panel */
-  panel: {
-    flex: 1,
-  },
-
-  /* Header */
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  headerIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-  headerBtn: {
-    padding: 4,
-  },
-
-  /* Back bar */
-  backBar: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-
-  /* Home: question box */
-  questionBox: {
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginBottom: 18,
-  },
-  questionText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-
-  /* Home: image row */
-  imageRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 18,
-  },
-  thumb: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-
-  /* Home: widgets label */
-  widgetLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
-    marginBottom: 16,
-    paddingLeft: 4,
-  },
-
-  /* Home: cards */
-  cardSolution: {
-    padding: 15,
-    borderRadius: 2,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "rgba(99,102,241,0.5)",
-    backgroundColor: "#2a3341",
-  },
-  cardBreakdown: {
-    padding: 15,
-    borderRadius: 2,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "rgba(139,92,246,0.5)",
-    backgroundColor: "#1e293b",
-  },
-  cardChat: {
-    padding: 15,
-    borderRadius: 2,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "rgba(34,197,94,0.5)",
-    backgroundColor: "#0f172a",
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#fff",
-    marginBottom: 8,
-  },
-  cardDesc: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.85)",
-    lineHeight: 20,
-    marginBottom: 10,
-  },
-
-  /* Chat preview bubbles on home */
-  chatBubbleRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 6,
-  },
-  chatBubble: {
-    height: 28,
-    backgroundColor: "#22c55e",
-    borderRadius: 20,
-    opacity: 0.9,
-  },
-  chatBubbleSmall: {
-    width: 40,
-    backgroundColor: "#16a34a",
-    opacity: 0.7,
-  },
-
-  /* Solution / Breakdown shared */
-  sectionHeader: {
-    fontWeight: "700",
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  sectionSub: {
-    fontSize: 13,
-    marginBottom: 18,
-  },
-  answerBox: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    backgroundColor: "rgba(99,102,241,0.08)",
-    marginBottom: 12,
-  },
-  answerLabel: {
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  answerText: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  infoBox: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  infoLabel: {
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  infoBody: {
-    fontSize: 14,
-    lineHeight: 22,
-  },
-
-  /* Breakdown: stages */
-  stageHeader: {
-    fontWeight: "700",
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  stageCard: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  stageTitle: {
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  stageMeta: {
-    fontSize: 13,
-    marginBottom: 6,
-  },
-  stageBody: {
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 4,
-  },
-
-  /* Breakdown: insights */
-  insightLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginBottom: 10,
-    marginTop: 8,
-  },
-  insightCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 10,
-  },
-  insightText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-
-  /* Solution image */
-  solutionImageWrap: {
-    marginTop: 18,
-    alignItems: "center",
-  },
-  solutionImage: {
-    width: "100%",
-    height: 250,
-    borderRadius: 12,
-  },
-
-  /* Chat: mini nav */
-  miniNav: {
-    flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  miniBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  miniBtnText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-
-  /* Chat: messages */
-  chatMsg: {
-    padding: 10,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    maxWidth: "80%",
-    marginBottom: 8,
-  },
-  chatUser: {
-    alignSelf: "flex-end",
-  },
-  chatAi: {
-    alignSelf: "flex-start",
-    borderWidth: 1,
-  },
-
-  /* Chat: footer */
-  chatFooter: {
-    flexDirection: "row",
-    padding: 10,
-    borderTopWidth: 1,
-    alignItems: "center",
-    gap: 8,
-  },
-  chatInput: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    fontSize: 14,
-  },
-  chatSendBtn: {
-    padding: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-  },
-
-  /* Fullscreen image */
-  fullscreenOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.9)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fullscreenClose: {
-    position: "absolute",
-    top: 50,
-    right: 20,
-    zIndex: 10,
-    padding: 8,
-  },
-  fullscreenImage: {
-    width: SCREEN_W * 0.92,
-    height: SCREEN_H * 0.7,
-    borderRadius: 12,
-  },
-});

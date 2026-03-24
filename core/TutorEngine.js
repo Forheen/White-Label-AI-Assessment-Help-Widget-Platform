@@ -104,7 +104,7 @@ class TutorEngine {
       this.state.chatStarting = false;
       this.state.chatHistory.push({
         type: "ai",
-        text: data.message || "Let's begin.",
+        text: data.reply || "Let's begin.",
       });
 
       return data;

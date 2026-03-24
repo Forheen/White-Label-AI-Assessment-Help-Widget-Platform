@@ -665,6 +665,47 @@ z-index:10;
 background:rgba(99,102,241,.3);
 
 }
+
+.footer-attach {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+}
+.footer-attach:hover {
+  border-color: var(--brand-solid);
+}
+.chat-img-preview {
+  display: flex;
+  gap: 6px;
+  padding: 6px 14px;
+  flex-wrap: wrap;
+}
+.chat-img-preview img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.chat-img-preview .remove-img {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
     </style>
 
     <button class="floating-btn">🤖</button>
@@ -685,10 +726,13 @@ background:rgba(99,102,241,.3);
         <div id="modes"></div>
         <div id="response"></div>
       </div>
-      <div class="footer">
-        <input placeholder="Ask your doubt..." />
-        <button>➤</button>
-      </div>
+    <div class="footer">
+  <input type="file" id="chatImageInput" accept="image/*" multiple style="display:none" />
+  <span class="footer-attach" id="attachBtn">📎</span>
+  <input placeholder="Ask your doubt..." />
+  <button>➤</button>
+</div>
+<div class="chat-img-preview" id="chatImgPreview"></div>
     </div>
   `;
 
@@ -703,6 +747,10 @@ background:rgba(99,102,241,.3);
   const footer = shadow.querySelector(".footer");
   const input = shadow.querySelector("input");
   const sendBtn = shadow.querySelector("button:last-child");
+  const attachBtn = shadow.querySelector("#attachBtn");
+const chatImageInput = shadow.querySelector("#chatImageInput");
+const chatImgPreview = shadow.querySelector("#chatImgPreview");
+let chatPendingImages = [];
 const resizeHandle = shadow.querySelector(".resize-handle");
 
 let isResizing=false;
@@ -714,7 +762,41 @@ isResizing=true;
 document.body.style.cursor="ew-resize";
 
 });
+attachBtn.onclick = () => {
+  chatImageInput.click();
+};
 
+chatImageInput.onchange = () => {
+  const files = chatImageInput.files;
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(",")[1];
+      chatPendingImages.push(base64);
+      renderChatImagePreview();
+    };
+    reader.readAsDataURL(file);
+  }
+  chatImageInput.value = "";
+};
+
+function renderChatImagePreview() {
+  chatImgPreview.innerHTML = "";
+  chatPendingImages.forEach((img, i) => {
+    const div = document.createElement("div");
+    div.style.position = "relative";
+    div.style.display = "inline-block";
+    div.innerHTML = `
+      <img src="data:image/png;base64,${img}" />
+      <div class="remove-img">✕</div>
+    `;
+    div.querySelector(".remove-img").onclick = () => {
+      chatPendingImages.splice(i, 1);
+      renderChatImagePreview();
+    };
+    chatImgPreview.appendChild(div);
+  });
+}
 document.addEventListener("mousemove",(e)=>{
 
 if(!isResizing) return;
@@ -1121,7 +1203,7 @@ if (!state.chatSessionId && !state.chatStarting) {
 
     state.chatHistory.push({
       type: "ai",
-      text: data.message || "Let's begin."
+      text: data.reply || "Let's begin."
     });
 
     renderResponse();
@@ -1174,70 +1256,63 @@ if (!state.chatSessionId && !state.chatStarting) {
   chatArea.scrollTop = chatArea.scrollHeight;
 
   // Send message
-  sendBtn.onclick = () => {
+sendBtn.onclick = () => {
 
-    const userText = input.value.trim();
-    if (!userText) return;
+  const userText = input.value.trim();
+  if (!userText && chatPendingImages.length === 0) return;
 
-    input.value = "";
+  input.value = "";
 
-    state.chatHistory.push({
-      type: "user",
-      text: userText
-    });
+  state.chatHistory.push({
+    type: "user",
+    text: userText || "📎 Image sent"
+  });
 
-    renderResponse();
+  // Grab images and clear preview
+  const imagesToSend = [...chatPendingImages];
+  chatPendingImages = [];
+  renderChatImagePreview();
 
-    // Typing indicator
-    const typingDiv = document.createElement("div");
-    typingDiv.className = "chat-msg ai";
-    typingDiv.innerHTML = `
-      <div class="typing">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-    `;
+  renderResponse();
 
-    chatArea.appendChild(typingDiv);
-    chatArea.scrollTop = chatArea.scrollHeight;
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "chat-msg ai";
+  typingDiv.innerHTML = `
+    <div class="typing">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  `;
+  chatArea.appendChild(typingDiv);
+  chatArea.scrollTop = chatArea.scrollHeight;
 
-    fetch(CHAT_MESSAGE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        session_id: state.chatSessionId,
-        message: userText
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-
-      typingDiv.remove();
-
-      state.chatHistory.push({
-        type: "ai",
-        text: data.reply
-      });
-
-      renderResponse();
-
-    })
-    .catch(() => {
-
-      typingDiv.remove();
-
-      state.chatHistory.push({
-        type: "ai",
-        text: "Server error while processing message."
-      });
-
-      renderResponse();
-    });
-
+  const payload = {
+    session_id: state.chatSessionId,
+    message: userText
   };
+
+  if (imagesToSend.length > 0) {
+    payload.images = imagesToSend;
+  }
+
+  fetch(CHAT_MESSAGE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    typingDiv.remove();
+    state.chatHistory.push({ type: "ai", text: data.reply });
+    renderResponse();
+  })
+  .catch(() => {
+    typingDiv.remove();
+    state.chatHistory.push({ type: "ai", text: "Server error." });
+    renderResponse();
+  });
+};
 
   return;
 }

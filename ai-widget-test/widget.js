@@ -726,13 +726,13 @@ background:rgba(99,102,241,.3);
         <div id="modes"></div>
         <div id="response"></div>
       </div>
+      <div class="chat-img-preview" id="chatImgPreview"></div>
     <div class="footer">
   <input type="file" id="chatImageInput" accept="image/*" multiple style="display:none" />
   <span class="footer-attach" id="attachBtn">📎</span>
-  <input placeholder="Ask your doubt..." />
+        <input id="chatTextInput" placeholder="Ask your doubt..." />
   <button>➤</button>
 </div>
-<div class="chat-img-preview" id="chatImgPreview"></div>
     </div>
   `;
 
@@ -745,7 +745,7 @@ background:rgba(99,102,241,.3);
   const modesEl = shadow.querySelector("#modes");
   const responseEl = shadow.querySelector("#response");
   const footer = shadow.querySelector(".footer");
-  const input = shadow.querySelector("input");
+const input = shadow.querySelector("#chatTextInput");
   const sendBtn = shadow.querySelector("button:last-child");
   const attachBtn = shadow.querySelector("#attachBtn");
 const chatImageInput = shadow.querySelector("#chatImageInput");
@@ -1245,13 +1245,29 @@ if (!state.chatSessionId && !state.chatStarting) {
   const chatArea = shadow.querySelector("#chatArea");
 
   // Render history
-  state.chatHistory.forEach(msg => {
+state.chatHistory.forEach(msg => {
     const msgDiv = document.createElement("div");
     msgDiv.className = "chat-msg " + msg.type;
-    msgDiv.innerText = msg.text;
-    chatArea.appendChild(msgDiv);
-  });
 
+    // Show image thumbnails if this message had images
+    let content = "";
+    if (msg.images && msg.images.length) {
+      content += `<div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;">`;
+      msg.images.forEach(img => {
+        content += `<img src="data:image/png;base64,${img}" style="
+          width:60px;height:60px;object-fit:cover;border-radius:8px;
+          border:1px solid rgba(255,255,255,0.2);
+        "/>`;
+      });
+      content += `</div>`;
+    }
+    if (msg.text) {
+      content += msg.text;
+    }
+
+    msgDiv.innerHTML = content;
+    chatArea.appendChild(msgDiv);
+});
   // Scroll to bottom
   chatArea.scrollTop = chatArea.scrollHeight;
 
@@ -1262,11 +1278,11 @@ sendBtn.onclick = () => {
   if (!userText && chatPendingImages.length === 0) return;
 
   input.value = "";
-
-  state.chatHistory.push({
+state.chatHistory.push({
     type: "user",
-    text: userText || "📎 Image sent"
-  });
+    text: userText,
+    images: imagesToSend.length > 0 ? imagesToSend : null
+});
 
   // Grab images and clear preview
   const imagesToSend = [...chatPendingImages];

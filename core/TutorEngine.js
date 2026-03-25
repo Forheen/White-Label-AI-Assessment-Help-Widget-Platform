@@ -114,25 +114,39 @@ class TutorEngine {
     }
   }
 
-  async sendMessage(message) {
-    if (!message) return { success: false };
+  async sendMessage(message, images = null) {
+    // Allow image-only OR text-only OR both
+    if (!message && (!images || images.length === 0)) {
+      return { success: false };
+    }
+
     if (!this.state.chatSessionId) {
       await this.startChatSession();
     }
 
-    this.state.chatHistory.push({ type: "user", text: message });
+    // Store in history WITH images
+    this.state.chatHistory.push({
+      type: "user",
+      text: message || "",
+      images: images && images.length > 0 ? images : null,
+    });
 
     try {
+      const payload = {
+        session_id: this.state.chatSessionId,
+        message: message || "",
+      };
+      if (images && images.length > 0) {
+        payload.images = images;
+      }
+
       const res = await fetch(this.CHAT_MESSAGE_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(this.config.apiKey && { "x-api-key": this.config.apiKey }),
         },
-        body: JSON.stringify({
-          session_id: this.state.chatSessionId,
-          message: message,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();

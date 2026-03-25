@@ -730,17 +730,19 @@ export default function AiTutor({
         {/* Input bar */}
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.border, gap: 8, backgroundColor: c.bg }}>
           {/* Attach button — only if onPickImage provided */}
-          {onPickImage && (
-            <TouchableOpacity
-              onPress={handlePickImage}
-              activeOpacity={0.7}
-              style={{
-                width: 40, height: 40, borderRadius: 12,
-                backgroundColor: c.surfaceElevated,
-                alignItems: "center", justifyContent: "center",
-                borderWidth: 1, borderColor: c.border,
-              }}
-            >
+         {onPickImage && (
+  <TouchableOpacity
+    onPress={handlePickImage}
+    activeOpacity={0.7}
+    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+    style={{
+      width: 44, height: 44, borderRadius: 12,
+      backgroundColor: c.surfaceElevated,
+      alignItems: "center", justifyContent: "center",
+      borderWidth: 1, borderColor: c.border,
+      zIndex: 10,
+    }}
+  >
               <Text style={{ fontSize: 18 }}>📎</Text>
             </TouchableOpacity>
           )}

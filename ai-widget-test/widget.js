@@ -1271,23 +1271,24 @@ state.chatHistory.forEach(msg => {
   // Scroll to bottom
   chatArea.scrollTop = chatArea.scrollHeight;
 
-  // Send message
 sendBtn.onclick = () => {
 
   const userText = input.value.trim();
   if (!userText && chatPendingImages.length === 0) return;
 
   input.value = "";
-state.chatHistory.push({
-    type: "user",
-    text: userText,
-    images: imagesToSend.length > 0 ? imagesToSend : null
-});
 
-  // Grab images and clear preview
+  // Grab images FIRST — before using them
   const imagesToSend = [...chatPendingImages];
   chatPendingImages = [];
   renderChatImagePreview();
+
+  // THEN push to history
+  state.chatHistory.push({
+    type: "user",
+    text: userText,
+    images: imagesToSend.length > 0 ? imagesToSend : null
+  });
 
   renderResponse();
 
